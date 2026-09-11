@@ -3,7 +3,7 @@
 
 """Abstract LLM APIs behind a common signature."""
 
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 from uni_llm_client._async_client import AsyncClient
 from uni_llm_client._client import Client
@@ -17,7 +17,10 @@ from uni_llm_client._errors import (
     UniLLMError,
 )
 
-__version__ = version("uni-llm-client")
+try:
+    __version__ = version("uni-llm-client")
+except PackageNotFoundError:  # a source checkout on sys.path, not installed
+    __version__ = "0+unknown"
 
 __all__ = [
     "AsyncClient",
