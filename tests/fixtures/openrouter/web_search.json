@@ -1,0 +1,37 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "gen-01",
+      "model": "anthropic/claude-haiku-4.5",
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "native_finish_reason": "end_turn",
+          "message": {
+            "role": "assistant",
+            "content": "Paris is the capital of France.",
+            "annotations": [
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "url": "https://en.wikipedia.org/wiki/Paris",
+                  "title": "Paris - Wikipedia",
+                  "content": "Paris is the capital and largest city of France.",
+                  "start_index": 0,
+                  "end_index": 31
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 2100,
+        "completion_tokens": 12,
+        "total_tokens": 2112,
+        "server_tool_use": {"web_search_requests": 1}
+      }
+    }
+  }
+]

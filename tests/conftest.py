@@ -5,7 +5,7 @@
 
 Tests only use the public API. Vendor-specific data lives in
 ``fixtures/<provider>/<scenario>.json``: the responses a vendor returns for a
-scenario, served in order. Every vendor provides every scenario.
+scenario, served in order. Tests are skipped for vendors without that scenario.
 """
 
 import asyncio
@@ -20,7 +20,11 @@ import pytest
 from uni_llm_client import AsyncClient, Client
 from uni_llm_client._registry import PROVIDERS
 
-MODELS = ["anthropic/claude-opus-5", "anthropic/claude-haiku-4-5"]
+MODELS = [
+    "anthropic/claude-opus-5",
+    "anthropic/claude-haiku-4-5",
+    "openrouter/anthropic/claude-haiku-4.5",
+]
 
 FIXTURES = Path(__file__).parent / "fixtures"
 TEST_API_KEYS = {name: "test-key" for name in PROVIDERS}
@@ -38,6 +42,8 @@ class FakeVendor:
     def serve(self, model: str, scenario: str) -> None:
         provider = model.partition("/")[0]
         path = FIXTURES / provider / f"{scenario}.json"
+        if not path.exists():
+            pytest.skip(f"{provider} has no {scenario!r} scenario")
         self._responses = json.loads(path.read_text())
 
     def handle(self, request: httpx.Request) -> httpx.Response:

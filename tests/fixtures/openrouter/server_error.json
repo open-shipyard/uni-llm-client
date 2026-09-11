@@ -1,0 +1,21 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "gen-01",
+      "model": "anthropic/claude-haiku-4.5",
+      "choices": [
+        {
+          "finish_reason": "error",
+          "native_finish_reason": null,
+          "message": {"role": "assistant", "content": "partial output..."},
+          "error": {
+            "code": 502,
+            "message": "Provider disconnected mid-stream",
+            "metadata": {"error_type": "provider_unavailable"}
+          }
+        }
+      ]
+    }
+  }
+]
