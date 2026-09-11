@@ -18,6 +18,9 @@ class Effort(StrEnum):
 
 _ORDER = tuple(Effort)
 
+# Thinking budgets for token-budget models; MAX uses the model's maximum.
+BUDGET_TOKENS = {Effort.LOW: 1_024, Effort.MEDIUM: 8_192, Effort.HIGH: 16_384}
+
 
 def parse_effort(effort: Effort | str | None) -> Effort | None:
     """Validate a user-supplied effort, raising `ValueError` if invalid (EFFORT-1)."""

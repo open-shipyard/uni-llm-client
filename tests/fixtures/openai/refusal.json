@@ -1,0 +1,26 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "resp_01",
+      "object": "response",
+      "status": "completed",
+      "error": null,
+      "incomplete_details": null,
+      "model": "gpt-5.6-sol",
+      "output": [
+        {"id": "rs_01", "type": "reasoning", "summary": []},
+        {
+          "id": "msg_01",
+          "type": "message",
+          "status": "completed",
+          "role": "assistant",
+          "content": [
+            {"type": "refusal", "refusal": "The request was declined."}
+          ]
+        }
+      ],
+      "usage": {"input_tokens": 14, "output_tokens": 20, "total_tokens": 34}
+    }
+  }
+]
