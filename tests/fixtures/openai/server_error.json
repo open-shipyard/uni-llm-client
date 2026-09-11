@@ -1,0 +1,17 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "resp_01",
+      "object": "response",
+      "status": "failed",
+      "error": {
+        "code": "server_error",
+        "message": "The server had an error processing your request."
+      },
+      "incomplete_details": null,
+      "model": "gpt-5.6-sol",
+      "output": []
+    }
+  }
+]

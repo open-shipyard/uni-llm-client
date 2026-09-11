@@ -1,0 +1,13 @@
+[
+  {
+    "status": 429,
+    "body": {
+      "error": {
+        "message": "Rate limit reached for gpt-5.6-sol on requests per min (RPM).",
+        "type": "requests",
+        "param": null,
+        "code": "rate_limit_exceeded"
+      }
+    }
+  }
+]

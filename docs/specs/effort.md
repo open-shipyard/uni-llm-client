@@ -38,7 +38,8 @@ class Effort(StrEnum):
 | `max` | `"max"` | `"max"` | `"high"` | model maximum |
 
 - Anthropic: `thinking: {type: "adaptive"}` + `output_config.effort`.
-- OpenAI: `reasoning.effort` (Responses API).
+- OpenAI: `reasoning.effort` (Responses API). Models without `"max"` resolve
+  `max` to their highest level, e.g. `"xhigh"`.
 - Gemini 3.x: `thinking_config.thinking_level`.
 - Token-budget models (e.g. Gemini 2.5, Claude Haiku 4.5): `thinking_budget` /
   `budget_tokens`.
