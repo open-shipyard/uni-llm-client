@@ -25,7 +25,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+    "httpx>=0.28",
+]
 
 [project.urls]
 Homepage = "https://github.com/open-shipyard/uni-llm-client"
@@ -60,5 +62,6 @@ files = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--strict-config", "--strict-markers"]
+addopts = ["--strict-config", "--strict-markers", "-m", "not live"]
+markers = ["live: calls real vendor APIs; needs API keys and costs money"]
 xfail_strict = true
