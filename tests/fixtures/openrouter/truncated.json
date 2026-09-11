@@ -1,0 +1,17 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "gen-01",
+      "model": "anthropic/claude-haiku-4.5",
+      "choices": [
+        {
+          "finish_reason": "length",
+          "native_finish_reason": "max_tokens",
+          "message": {"role": "assistant", "content": "Paris is"}
+        }
+      ],
+      "usage": {"prompt_tokens": 14, "completion_tokens": 64000, "total_tokens": 64014}
+    }
+  }
+]

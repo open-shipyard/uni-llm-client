@@ -1,0 +1,21 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "gen-01",
+      "model": "anthropic/claude-haiku-4.5",
+      "choices": [
+        {
+          "finish_reason": "content_filter",
+          "native_finish_reason": "refusal",
+          "message": {
+            "role": "assistant",
+            "content": null,
+            "refusal": "The request was declined."
+          }
+        }
+      ],
+      "usage": {"prompt_tokens": 14, "completion_tokens": 0, "total_tokens": 14}
+    }
+  }
+]

@@ -1,0 +1,6 @@
+[
+  {
+    "status": 401,
+    "body": {"error": {"message": "User not found.", "code": 401}}
+  }
+]
