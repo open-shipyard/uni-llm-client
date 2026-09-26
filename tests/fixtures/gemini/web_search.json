@@ -1,0 +1,52 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "candidates": [
+        {
+          "content": {
+            "role": "model",
+            "parts": [
+              {"text": "Paris is "},
+              {"text": "the capital of France.", "thoughtSignature": "c2lnXzAx"}
+            ]
+          },
+          "finishReason": "STOP",
+          "index": 0,
+          "groundingMetadata": {
+            "webSearchQueries": ["capital of France"],
+            "searchEntryPoint": {"renderedContent": "<!-- search widget -->"},
+            "groundingChunks": [
+              {
+                "web": {
+                  "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/01",
+                  "title": "wikipedia.org"
+                }
+              }
+            ],
+            "groundingSupports": [
+              {
+                "segment": {
+                  "partIndex": 1,
+                  "startIndex": 0,
+                  "endIndex": 22,
+                  "text": "the capital of France."
+                },
+                "groundingChunkIndices": [0]
+              }
+            ]
+          }
+        }
+      ],
+      "usageMetadata": {
+        "promptTokenCount": 14,
+        "toolUsePromptTokenCount": 2100,
+        "candidatesTokenCount": 12,
+        "thoughtsTokenCount": 20,
+        "totalTokenCount": 2146
+      },
+      "modelVersion": "gemini-3.8-flash",
+      "responseId": "resp_01"
+    }
+  }
+]

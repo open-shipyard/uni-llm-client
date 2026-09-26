@@ -1,0 +1,61 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "resp_01",
+      "object": "response",
+      "status": "completed",
+      "error": null,
+      "incomplete_details": null,
+      "model": "gpt-5.6-sol",
+      "output": [
+        {"id": "rs_01", "type": "reasoning", "summary": []},
+        {
+          "id": "msg_01",
+          "type": "message",
+          "status": "completed",
+          "role": "assistant",
+          "phase": "commentary",
+          "content": [
+            {"type": "output_text", "text": "I'll search for that.", "annotations": []}
+          ]
+        },
+        {
+          "id": "ws_01",
+          "type": "web_search_call",
+          "status": "completed",
+          "action": {"type": "search", "query": "capital of France"}
+        },
+        {"id": "rs_02", "type": "reasoning", "summary": []},
+        {
+          "id": "msg_02",
+          "type": "message",
+          "status": "completed",
+          "role": "assistant",
+          "phase": "final_answer",
+          "content": [
+            {
+              "type": "output_text",
+              "text": "Paris is the capital of France.",
+              "annotations": [
+                {
+                  "type": "url_citation",
+                  "start_index": 0,
+                  "end_index": 31,
+                  "url": "https://en.wikipedia.org/wiki/Paris",
+                  "title": "Paris - Wikipedia"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "usage": {
+        "input_tokens": 2100,
+        "output_tokens": 40,
+        "output_tokens_details": {"reasoning_tokens": 20},
+        "total_tokens": 2140
+      }
+    }
+  }
+]

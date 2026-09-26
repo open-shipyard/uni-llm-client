@@ -8,7 +8,7 @@ from typing import Any
 
 import httpx
 
-from uni_llm_client._effort import Effort, resolve_effort
+from uni_llm_client._effort import BUDGET_TOKENS, Effort, resolve_effort
 from uni_llm_client._errors import IncompleteResponseError, RefusalError
 from uni_llm_client.providers._base import Provider, http_error
 from uni_llm_client.providers.anthropic._models import (
@@ -22,9 +22,6 @@ API_VERSION = "2023-06-01"
 # Output tokens reserved for the answer. Token-budget models add their thinking
 # budget on top, since the budget must be lower than max_tokens.
 MAX_TOKENS = 16_000
-
-# Thinking budgets for token-budget models; MAX uses the model's full output limit.
-BUDGET_TOKENS = {Effort.LOW: 1_024, Effort.MEDIUM: 8_192, Effort.HIGH: 16_384}
 
 _THINKING_BLOCKS = frozenset({"thinking", "redacted_thinking"})
 
@@ -46,6 +43,7 @@ class AnthropicProvider(Provider):
             if info is not None:
                 effort = resolve_effort(effort, info.efforts)
             if info is not None and info.thinking == "budget":
+                # MAX uses the model's full output limit.
                 budget = BUDGET_TOKENS.get(effort, info.max_output_tokens - MAX_TOKENS)
                 body["max_tokens"] = budget + MAX_TOKENS
                 body["thinking"] = {"type": "enabled", "budget_tokens": budget}

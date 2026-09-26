@@ -12,10 +12,18 @@ from uni_llm_client._effort import Effort, parse_effort
 from uni_llm_client._errors import AuthenticationError
 from uni_llm_client.providers._base import Provider
 from uni_llm_client.providers.anthropic import AnthropicProvider
+from uni_llm_client.providers.gemini import GeminiProvider
+from uni_llm_client.providers.openai import OpenAIProvider
 from uni_llm_client.providers.openrouter import OpenRouterProvider
 
 PROVIDERS: dict[str, type[Provider]] = {
-    provider.name: provider for provider in (AnthropicProvider, OpenRouterProvider)
+    provider.name: provider
+    for provider in (
+        AnthropicProvider,
+        GeminiProvider,
+        OpenAIProvider,
+        OpenRouterProvider,
+    )
 }
 
 

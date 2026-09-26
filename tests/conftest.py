@@ -23,6 +23,9 @@ from uni_llm_client._registry import PROVIDERS
 MODELS = [
     "anthropic/claude-opus-5",
     "anthropic/claude-haiku-4-5",
+    "gemini/gemini-3.8-flash",
+    "gemini/gemini-2.5-flash",
+    "openai/gpt-5.6-sol",
     "openrouter/anthropic/claude-haiku-4.5",
 ]
 
