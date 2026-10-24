@@ -1,0 +1,26 @@
+[
+  {
+    "status": 200,
+    "body": {
+      "id": "gen-01",
+      "model": "anthropic/claude-haiku-4.5",
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "native_finish_reason": "end_turn",
+          "message": {
+            "role": "assistant",
+            "content": "Paris is the capital of France.",
+            "reasoning": "The user asks for the capital of France."
+          }
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 14,
+        "completion_tokens": 30,
+        "total_tokens": 44,
+        "completion_tokens_details": {"reasoning_tokens": 18}
+      }
+    }
+  }
+]

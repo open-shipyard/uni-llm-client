@@ -10,6 +10,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python
     steps:
       - uses: actions/checkout@v7
         with:
@@ -21,7 +24,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: dist
-          path: dist/
+          path: packages/python/dist/
 
   publish-pypi:
     needs: build

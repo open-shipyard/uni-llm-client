@@ -1,0 +1,38 @@
+[
+  {
+    "name": "openrouter-question",
+    "ask": {"model": "openrouter/anthropic/claude-haiku-4.5", "question": "What is the capital of France?"},
+    "responses": "openrouter/answer",
+    "requests": [
+      {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "headers": {"authorization": "Bearer test-key", "content-type": "application/json"},
+        "json": {
+          "model": "anthropic/claude-haiku-4.5",
+          "messages": [{"role": "user", "content": "What is the capital of France?"}]
+        }
+      }
+    ],
+    "answer": "Paris is the capital of France."
+  },
+  {
+    "name": "openrouter-effort-and-web-search",
+    "ask": {"model": "openrouter/anthropic/claude-haiku-4.5", "question": "What is the capital of France?", "effort": "medium", "web_search": true},
+    "responses": "openrouter/answer",
+    "requests": [
+      {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "headers": {"authorization": "Bearer test-key"},
+        "json": {
+          "model": "anthropic/claude-haiku-4.5",
+          "messages": [{"role": "user", "content": "What is the capital of France?"}],
+          "reasoning": {"effort": "medium"},
+          "tools": [{"type": "openrouter:web_search"}]
+        }
+      }
+    ],
+    "answer": "Paris is the capital of France."
+  }
+]
