@@ -2,7 +2,7 @@
   "status": 200,
   "body": {
     "id": "gen-01",
-    "model": "anthropic/claude-haiku-4.5",
+    "model": "openai/gpt-oss-20b",
     "choices": [
       {
         "finish_reason": "stop",

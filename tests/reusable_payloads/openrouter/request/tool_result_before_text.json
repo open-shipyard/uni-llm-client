@@ -6,7 +6,7 @@
     "content-type": "application/json"
   },
   "json": {
-    "model": "anthropic/claude-haiku-4.5",
+    "model": "openai/gpt-oss-20b",
     "tools": [
       {
         "type": "function",

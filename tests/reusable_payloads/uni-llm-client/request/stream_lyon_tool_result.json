@@ -1,5 +1,5 @@
 {
-  "model": "openrouter/anthropic/claude-haiku-4.5",
+  "model": "openrouter/openai/gpt-oss-20b",
   "tools": [
     {
       "name": "get_weather",
@@ -24,7 +24,7 @@
       "content": [
         {
           "type": "text",
-          "text": "What is the weather in Lyon?"
+          "text": "Use the get_weather tool to get the weather in Lyon."
         }
       ]
     },
@@ -41,5 +41,6 @@
         }
       ]
     }
-  ]
+  ],
+  "system": "You must call the get_weather tool before answering. Never answer from memory."
 }
