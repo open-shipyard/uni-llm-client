@@ -22,12 +22,12 @@ from uni_llm_client._errors import ProviderError, TransportError, UniLLMError
 
 DEFAULT_MAX_RETRIES = 2
 
-# RETRY-3: from half a second, doubling, up to 8 seconds.
-INITIAL_DELAY = 0.5
-MAX_DELAY = 8.0
+# RETRY-3 by default: from half a second, doubling, up to 8 seconds.
+DEFAULT_INITIAL_RETRY_DELAY = 0.5
+DEFAULT_MAX_RETRY_DELAY = 8.0
 
-# RETRY-4: the longest wait a vendor can ask for and get.
-MAX_RETRY_AFTER = 60.0
+# RETRY-4 by default: the longest wait a vendor can ask for and get.
+DEFAULT_MAX_RETRY_AFTER = 60.0
 
 # RETRY-2, besides every 5xx: a request timeout, a conflict and a rate limit.
 RETRYABLE_STATUSES = frozenset({408, 409, 429})
@@ -40,11 +40,27 @@ class RetryPolicy:
     max_retries: int = DEFAULT_MAX_RETRIES
     """Retries after the first attempt; 0 disables them (RETRY-1)."""
 
+    initial_retry_delay: float = DEFAULT_INITIAL_RETRY_DELAY
+    """Seconds before the first retry, doubled for each one after (RETRY-3)."""
+
+    max_retry_delay: float = DEFAULT_MAX_RETRY_DELAY
+    """The longest wait the doubling reaches (RETRY-3)."""
+
+    max_retry_after: float = DEFAULT_MAX_RETRY_AFTER
+    """The longest wait a vendor can ask for and get (RETRY-4)."""
+
     def __post_init__(self) -> None:
-        if self.max_retries < 0:
-            raise ValueError(
-                f"Expected a max_retries of 0 or more, got {self.max_retries!r}"
-            )
+        for name in (
+            "max_retries",
+            "initial_retry_delay",
+            "max_retry_delay",
+            "max_retry_after",
+        ):
+            value = getattr(self, name)
+            if not 0 <= value < math.inf:
+                raise ValueError(
+                    f"Expected a finite {name} of 0 or more, got {value!r}"
+                )
 
     def delay(
         self,
@@ -68,9 +84,9 @@ class RetryPolicy:
         if retries >= self.max_retries or not is_retryable(error):
             return None
         asked = None if response is None else retry_after(response.headers, now)
-        if asked is not None and 0 <= asked <= MAX_RETRY_AFTER:
+        if asked is not None and 0 <= asked <= self.max_retry_after:
             return asked
-        return backoff(retries, jitter)
+        return backoff(retries, jitter, self.initial_retry_delay, self.max_retry_delay)
 
 
 def is_retryable(error: UniLLMError) -> bool:
@@ -88,11 +104,18 @@ def is_retryable(error: UniLLMError) -> bool:
     return status in RETRYABLE_STATUSES or 500 <= status <= 599
 
 
-def backoff(retries: int, jitter: float) -> float:
-    """The wait before the next retry when the vendor asks for none: 0.5 s after
-    the first attempt, doubling up to 8 s, less up to a quarter (RETRY-3)."""
+def backoff(
+    retries: int,
+    jitter: float,
+    initial_retry_delay: float = DEFAULT_INITIAL_RETRY_DELAY,
+    max_retry_delay: float = DEFAULT_MAX_RETRY_DELAY,
+) -> float:
+    """The wait before the next retry when the vendor asks for none:
+    `initial_retry_delay` after the first attempt, doubling up to
+    `max_retry_delay`, less up to a quarter (RETRY-3)."""
     # A capped exponent keeps a large max_retries from overflowing the float.
-    return min(INITIAL_DELAY * 2.0 ** min(retries, 32), MAX_DELAY) * (1 - jitter / 4)
+    longest = min(initial_retry_delay * 2.0 ** min(retries, 32), max_retry_delay)
+    return longest * (1 - jitter / 4)
 
 
 def retry_after(headers: Mapping[str, str], now: float) -> float | None:
