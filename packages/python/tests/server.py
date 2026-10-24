@@ -27,6 +27,7 @@ from uni_llm_client import (
     ContentBlock,
     IncompleteResponseError,
     Message,
+    ProviderConfig,
     ProviderError,
     RateLimitError,
     ReasoningBlock,
@@ -44,6 +45,7 @@ from uni_llm_client import (
     ToolUseDelta,
     ToolUseEnd,
     ToolUseStart,
+    TransportError,
     VendorContent,
 )
 from uni_llm_client._client import DEFAULT_TIMEOUT
@@ -76,6 +78,7 @@ ERROR_TYPES: list[tuple[type[Exception], str]] = [
     (RateLimitError, "rate_limit"),
     (RefusalError, "refusal"),
     (IncompleteResponseError, "incomplete_response"),
+    (TransportError, "transport"),
     (ProviderError, "provider"),
 ]
 
@@ -155,7 +158,23 @@ def ask_kwargs(args: dict[str, Any]) -> dict[str, Any]:
         "question": args["question"],
         "web_search": args.get("web_search", False),
         "effort": args.get("effort"),
+        "timeout": args.get("timeout"),
     }
+
+
+def client_kwargs(args: dict[str, Any]) -> dict[str, Any]:
+    """The arguments of the client: `api_keys`, `providers`, and `max_retries`
+    when given."""
+    providers = args.get("providers") or {}
+    kwargs: dict[str, Any] = {
+        "api_keys": args.get("api_keys"),
+        "providers": {
+            name: ProviderConfig(**config) for name, config in providers.items()
+        },
+    }
+    if "max_retries" in args:
+        kwargs["max_retries"] = args["max_retries"]
+    return kwargs
 
 
 def model_kwargs(args: dict[str, Any]) -> dict[str, Any]:
@@ -168,6 +187,7 @@ def model_kwargs(args: dict[str, Any]) -> dict[str, Any]:
         "web_search": args.get("web_search", False),
         "effort": args.get("effort"),
         "max_tokens": args.get("max_tokens"),
+        "timeout": args.get("timeout"),
     }
 
 
@@ -186,7 +206,13 @@ def call_sync(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
         timeout=DEFAULT_TIMEOUT,
         trust_env=False,
     )
-    with Client(api_keys=args.get("api_keys"), http_client=http_client) as client:
+    try:
+        client = Client(http_client=http_client, **client_kwargs(args))
+    except Exception as error:
+        # A refused configuration is a library error like any other.
+        http_client.close()
+        return error_reply(error)
+    with client:
         try:
             if call == "ask":
                 return {"answer": client.ask(**ask_kwargs(args))}
@@ -212,9 +238,12 @@ def call_async(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
             timeout=DEFAULT_TIMEOUT,
             trust_env=False,
         )
-        async with AsyncClient(
-            api_keys=args.get("api_keys"), http_client=http_client
-        ) as client:
+        try:
+            client = AsyncClient(http_client=http_client, **client_kwargs(args))
+        except Exception as error:
+            await http_client.aclose()
+            return error_reply(error)
+        async with client:
             try:
                 if call == "ask":
                     return {"answer": await client.ask(**ask_kwargs(args))}

@@ -41,7 +41,7 @@ class ModelCall:
     max_tokens: int | None = None
     timeout: float | None = None
     """Seconds to wait for the connection and for each read; the client's when
-    ``None`` (PROV-8)."""
+    ``None``."""
 
 
 class StreamParser(ABC):
@@ -84,7 +84,7 @@ class Provider(ABC):
 
     def __init__(self, api_key: str, base_url: str | None = None) -> None:
         self.api_key = api_key
-        # One trailing slash or none, both common in configuration (PROV-5).
+        # One trailing slash or none, both common in configuration.
         self.base_url = (base_url or self.default_base_url).rstrip("/")
 
     @property

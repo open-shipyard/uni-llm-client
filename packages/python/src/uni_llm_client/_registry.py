@@ -23,7 +23,7 @@ PROVIDERS: dict[str, type[Provider]] = {
 """The implementation of each kind."""
 
 BUILT_IN: dict[str, ProviderConfig] = {kind: ProviderConfig(kind) for kind in PROVIDERS}
-"""The providers every client has: one per kind, under the kind's name (PROV-2)."""
+"""The providers every client has: one per kind, under the kind's name."""
 
 
 class ProviderRegistry:

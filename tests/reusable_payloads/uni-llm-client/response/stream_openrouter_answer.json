@@ -1,0 +1,39 @@
+{
+  "events": [
+    {
+      "type": "text_delta",
+      "text": "Paris is"
+    },
+    {
+      "type": "text_delta",
+      "text": " the capital of France."
+    },
+    {
+      "type": "completed",
+      "response": {
+        "message": {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Paris is the capital of France."
+            }
+          ],
+          "vendor": {
+            "kind": "openrouter",
+            "content": {
+              "content": "Paris is the capital of France."
+            }
+          }
+        },
+        "stop_reason": "end_turn",
+        "usage": {
+          "input_tokens": 14,
+          "output_tokens": 8,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    }
+  ]
+}

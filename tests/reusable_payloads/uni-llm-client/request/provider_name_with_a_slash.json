@@ -1,0 +1,10 @@
+{
+  "model": "a/b/claude-opus-5",
+  "question": "What is the capital of France?",
+  "providers": {
+    "a/b": {
+      "kind": "anthropic",
+      "api_key": "k"
+    }
+  }
+}
