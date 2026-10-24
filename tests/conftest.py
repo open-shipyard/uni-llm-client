@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-import httpx
+import httpx2
 import pytest
 
 from uni_llm_client import AsyncClient, Client
@@ -36,7 +36,7 @@ class FakeVendor:
     """Serves recorded vendor responses and records the requests it receives."""
 
     def __init__(self) -> None:
-        self.requests: list[httpx.Request] = []
+        self.requests: list[httpx2.Request] = []
         self._responses: list[dict[str, Any]] = []
 
     def serve(self, model: str, scenario: str) -> None:
@@ -46,10 +46,10 @@ class FakeVendor:
             pytest.skip(f"{provider} has no {scenario!r} scenario")
         self._responses = json.loads(path.read_text())
 
-    def handle(self, request: httpx.Request) -> httpx.Response:
+    def handle(self, request: httpx2.Request) -> httpx2.Response:
         self.requests.append(request)
         recorded = self._responses.pop(0)
-        return httpx.Response(recorded["status"], json=recorded["body"])
+        return httpx2.Response(recorded["status"], json=recorded["body"])
 
 
 @pytest.fixture(params=MODELS)
@@ -65,7 +65,7 @@ def vendor() -> FakeVendor:
 @pytest.fixture(params=["sync", "async"])
 def ask(request: pytest.FixtureRequest, vendor: FakeVendor) -> Ask:
     """Call `ask` on a `Client` or `AsyncClient` wired to the fake vendor."""
-    transport = httpx.MockTransport(vendor.handle)
+    transport = httpx2.MockTransport(vendor.handle)
 
     def ask_sync(
         model: str,
@@ -73,7 +73,7 @@ def ask(request: pytest.FixtureRequest, vendor: FakeVendor) -> Ask:
         api_keys: Mapping[str, str] | None = TEST_API_KEYS,
         **kwargs: Any,
     ) -> str:
-        http_client = httpx.Client(transport=transport)
+        http_client = httpx2.Client(transport=transport)
         with Client(api_keys=api_keys, http_client=http_client) as client:
             return client.ask(model, question, **kwargs)
 
@@ -84,7 +84,7 @@ def ask(request: pytest.FixtureRequest, vendor: FakeVendor) -> Ask:
         **kwargs: Any,
     ) -> str:
         async def run() -> str:
-            http_client = httpx.AsyncClient(transport=transport)
+            http_client = httpx2.AsyncClient(transport=transport)
             async with AsyncClient(
                 api_keys=api_keys, http_client=http_client
             ) as client:

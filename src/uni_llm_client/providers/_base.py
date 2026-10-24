@@ -6,7 +6,7 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
-import httpx
+import httpx2
 
 from uni_llm_client._effort import Effort
 from uni_llm_client._errors import AuthenticationError, ProviderError, RateLimitError
@@ -34,11 +34,11 @@ class Provider(ABC):
     @abstractmethod
     def build_request(
         self, model: str, question: str, *, web_search: bool, effort: Effort | None
-    ) -> httpx.Request:
+    ) -> httpx2.Request:
         """Build the request that asks `model` the `question`."""
 
     @abstractmethod
-    def parse_response(self, response: httpx.Response) -> str | httpx.Request:
+    def parse_response(self, response: httpx2.Response) -> str | httpx2.Request:
         """Return the answer, or a follow-up request if the vendor paused the turn."""
 
 

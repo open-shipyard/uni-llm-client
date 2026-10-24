@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from types import TracebackType
 from typing import Self
 
-import httpx
+import httpx2
 
 from uni_llm_client._client import DEFAULT_TIMEOUT
 from uni_llm_client._effort import Effort
@@ -29,10 +29,10 @@ class AsyncClient:
         self,
         *,
         api_keys: Mapping[str, str] | None = None,
-        http_client: httpx.AsyncClient | None = None,
+        http_client: httpx2.AsyncClient | None = None,
     ) -> None:
         self._registry = ProviderRegistry(api_keys)
-        self._http = http_client or httpx.AsyncClient(timeout=DEFAULT_TIMEOUT)
+        self._http = http_client or httpx2.AsyncClient(timeout=DEFAULT_TIMEOUT)
 
     async def ask(
         self,

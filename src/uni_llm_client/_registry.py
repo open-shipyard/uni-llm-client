@@ -6,7 +6,7 @@
 import os
 from collections.abc import Mapping
 
-import httpx
+import httpx2
 
 from uni_llm_client._effort import Effort, parse_effort
 from uni_llm_client._errors import AuthenticationError
@@ -33,7 +33,7 @@ class ProviderRegistry:
         *,
         web_search: bool,
         effort: Effort | str | None,
-    ) -> tuple[Provider, httpx.Request]:
+    ) -> tuple[Provider, httpx2.Request]:
         """Validate the arguments and build the first request without sending it."""
         parsed_effort = parse_effort(effort)
         name, _, model = model_id.partition("/")

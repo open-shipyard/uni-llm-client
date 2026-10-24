@@ -6,7 +6,7 @@
 import json
 from typing import Any
 
-import httpx
+import httpx2
 
 from uni_llm_client._effort import Effort, resolve_effort
 from uni_llm_client._errors import IncompleteResponseError, RefusalError
@@ -35,7 +35,7 @@ class AnthropicProvider(Provider):
 
     def build_request(
         self, model: str, question: str, *, web_search: bool, effort: Effort | None
-    ) -> httpx.Request:
+    ) -> httpx2.Request:
         info = lookup_model(model)
         body: dict[str, Any] = {
             "model": model,
@@ -57,7 +57,7 @@ class AnthropicProvider(Provider):
             body["tools"] = [{"type": tool, "name": "web_search"}]
         return self._request(body)
 
-    def parse_response(self, response: httpx.Response) -> str | httpx.Request:
+    def parse_response(self, response: httpx2.Response) -> str | httpx2.Request:
         if response.is_error:
             raise http_error(response.status_code, _error_message(response))
         message = response.json()
@@ -84,9 +84,9 @@ class AnthropicProvider(Provider):
             raise IncompleteResponseError("The response contained no answer text")
         return answer
 
-    def _request(self, body: dict[str, Any]) -> httpx.Request:
+    def _request(self, body: dict[str, Any]) -> httpx2.Request:
         headers = {"x-api-key": self.api_key, "anthropic-version": API_VERSION}
-        return httpx.Request("POST", API_URL, headers=headers, json=body)
+        return httpx2.Request("POST", API_URL, headers=headers, json=body)
 
 
 def _final_text(content: list[dict[str, Any]]) -> str:
@@ -100,7 +100,7 @@ def _final_text(content: list[dict[str, Any]]) -> str:
     return "".join(texts)
 
 
-def _error_message(response: httpx.Response) -> str:
+def _error_message(response: httpx2.Response) -> str:
     try:
         return str(response.json()["error"]["message"])
     except (ValueError, KeyError, TypeError):
