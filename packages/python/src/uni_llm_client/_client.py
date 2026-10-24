@@ -44,7 +44,6 @@ DEFAULT_TIMEOUT = httpx2.Timeout(600.0, connect=10.0)
 # How the client waits before a retry; the unit tests replace it.
 _sleep = time.sleep
 
-# The OS's source: unpredictable jitter for the retry backoff, at no real cost.
 _random = random.SystemRandom()
 
 

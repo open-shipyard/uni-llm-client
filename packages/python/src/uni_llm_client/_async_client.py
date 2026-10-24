@@ -36,7 +36,6 @@ T = TypeVar("T")
 # How the client waits before a retry; the unit tests replace it.
 _sleep = asyncio.sleep
 
-# The OS's source: unpredictable jitter for the retry backoff, at no real cost.
 _random = random.SystemRandom()
 
 
