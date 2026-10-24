@@ -28,6 +28,8 @@ MODELS = [
 
 FIXTURES = Path(__file__).parent / "fixtures"
 TEST_API_KEYS = {name: "test-key" for name in PROVIDERS}
+# These tests expect each mocked response to be the last; retries have their own.
+NO_RETRIES = 0
 
 Ask = Callable[..., str]
 
@@ -74,7 +76,9 @@ def ask(request: pytest.FixtureRequest, vendor: FakeVendor) -> Ask:
         **kwargs: Any,
     ) -> str:
         http_client = httpx2.Client(transport=transport)
-        with Client(api_keys=api_keys, http_client=http_client) as client:
+        with Client(
+            api_keys=api_keys, http_client=http_client, max_retries=NO_RETRIES
+        ) as client:
             return client.ask(model, question, **kwargs)
 
     def ask_async(
@@ -86,7 +90,7 @@ def ask(request: pytest.FixtureRequest, vendor: FakeVendor) -> Ask:
         async def run() -> str:
             http_client = httpx2.AsyncClient(transport=transport)
             async with AsyncClient(
-                api_keys=api_keys, http_client=http_client
+                api_keys=api_keys, http_client=http_client, max_retries=NO_RETRIES
             ) as client:
                 return await client.ask(model, question, **kwargs)
 

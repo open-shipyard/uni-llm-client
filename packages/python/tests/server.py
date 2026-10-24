@@ -114,7 +114,7 @@ def message_of(data: dict[str, Any]) -> Message:
     vendor = data.get("vendor")
     if vendor is not None:
         return Message(
-            data["role"], content, VendorContent(vendor["provider"], vendor["content"])
+            data["role"], content, VendorContent(vendor["kind"], vendor["content"])
         )
     return Message(data["role"], content)
 
@@ -128,7 +128,7 @@ def message_json(message: Message) -> dict[str, Any]:
     return {
         "role": message.role,
         "content": [block_json(block) for block in message.content],
-        "vendor": vendor and {"provider": vendor.provider, "content": vendor.content},
+        "vendor": vendor and {"kind": vendor.kind, "content": vendor.content},
     }
 
 
