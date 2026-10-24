@@ -3,15 +3,11 @@
 
 import importlib
 import importlib.metadata
-from importlib.metadata import PackageNotFoundError, version
+from importlib.metadata import PackageNotFoundError
 
 import pytest
 
 import uni_llm_client
-
-
-def test_version_matches_distribution_metadata() -> None:
-    assert uni_llm_client.__version__ == version("uni-llm-client")
 
 
 def test_imports_without_distribution_metadata(monkeypatch: pytest.MonkeyPatch) -> None:

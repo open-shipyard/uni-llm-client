@@ -193,5 +193,50 @@
         "reply": "uni-llm-client/response/stream_rate_limit"
       }
     ]
+  },
+  {
+    "name": "anthropic-ask-cut-at-max-tokens",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/max_tokens"
+          }
+        ],
+        "reply": "uni-llm-client/response/incomplete_response"
+      }
+    ]
+  },
+  {
+    "name": "anthropic-refusal",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/refusal"
+          }
+        ],
+        "reply": "uni-llm-client/response/refusal"
+      }
+    ]
+  },
+  {
+    "name": "anthropic-auth-error",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/auth_error"
+          }
+        ],
+        "reply": "uni-llm-client/response/authentication"
+      }
+    ]
   }
 ]
