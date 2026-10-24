@@ -28,5 +28,45 @@
         "reply": "uni-llm-client/response/answer"
       }
     ]
+  },
+  {
+    "name": "openrouter-streamed-tool-call",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_lyon_ask",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_lyon_ask",
+            "response": "openrouter/response/stream_lyon_tool_use"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_lyon_tool_use"
+      },
+      {
+        "complete": "uni-llm-client/request/stream_lyon_tool_result",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_lyon_tool_result",
+            "response": "openrouter/response/weather_lyon_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/weather_lyon_answer"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-stream-error-chunk",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_openrouter_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_question",
+            "response": "openrouter/response/stream_error_chunk"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_openrouter_provider_error"
+      }
+    ]
   }
 ]
