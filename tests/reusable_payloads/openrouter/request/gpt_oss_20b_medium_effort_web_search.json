@@ -6,11 +6,19 @@
     "content-type": "application/json"
   },
   "json": {
-    "model": "anthropic/claude-haiku-4.5",
+    "model": "openai/gpt-oss-20b",
     "messages": [
       {
         "role": "user",
         "content": "What is the capital of France?"
+      }
+    ],
+    "reasoning": {
+      "effort": "medium"
+    },
+    "tools": [
+      {
+        "type": "openrouter:web_search"
       }
     ]
   }

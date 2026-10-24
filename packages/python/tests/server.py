@@ -46,6 +46,7 @@ from uni_llm_client import (
     ToolUseStart,
     VendorContent,
 )
+from uni_llm_client._client import DEFAULT_TIMEOUT
 
 CALLS = ("ask", "complete", "stream")
 
@@ -181,7 +182,9 @@ def error_reply(error: Exception) -> dict[str, Any]:
 def call_sync(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
     # trust_env=False: a proxy from the environment would bypass the transport.
     http_client = httpx2.Client(
-        transport=RedirectTransport(vendor_url), trust_env=False
+        transport=RedirectTransport(vendor_url),
+        timeout=DEFAULT_TIMEOUT,
+        trust_env=False,
     )
     with Client(api_keys=args.get("api_keys"), http_client=http_client) as client:
         try:
@@ -205,7 +208,9 @@ def call_sync(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
 def call_async(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
     async def run() -> Any:
         http_client = httpx2.AsyncClient(
-            transport=AsyncRedirectTransport(vendor_url), trust_env=False
+            transport=AsyncRedirectTransport(vendor_url),
+            timeout=DEFAULT_TIMEOUT,
+            trust_env=False,
         )
         async with AsyncClient(
             api_keys=args.get("api_keys"), http_client=http_client

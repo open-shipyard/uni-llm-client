@@ -14,6 +14,31 @@ one with `--impl`:
     uv run pytest
     uv run pytest --impl python-async
 
+`--live openrouter` runs the cases marked `"live": true` against the real
+OpenRouter, with `openai/gpt-oss-20b`. It costs a fraction of a cent. The key
+comes from `OPENROUTER_API_KEY`, in the environment or in `~/.env`:
+
+    uv run pytest --live openrouter
+
+In live mode, the mock vendor forwards each request to OpenRouter and puts the
+real key in its `Authorization` header. The test servers keep `test-key`. A
+live step checks that the vendor accepted every request. A step that sends back
+no earlier reply also matches its vendor requests exactly. Its reply matches the
+mocked one on what a real model must keep:
+
+- The stop reason, and the names of the tools called.
+- The keys of each tool's input. A text value contains the expected one.
+- Some text, when the mocked reply has text.
+- For a stream, the order of the events, and the pieces that add up to the
+  response.
+
+A live case prompts the model to do what it checks, such as calling a tool.
+
+Each live run saves its exchanges in `tests/.live/<time>/<case>/<implementation>/`,
+which git ignores. A file per step holds the arguments, each vendor request and
+response, and the test server's reply. A saved response has the form of a vendor
+response payload, so it can refresh a mocked one. The files hold no real key.
+
 ## Cases
 
 Cases live in `cases/*.json`. Each case has a `name`, the test id, and `steps`,
@@ -24,6 +49,8 @@ which run in order. A step names payloads instead of holding them:
 | `ask`, `complete` or `stream` | The call, and its arguments. |
 | `vendor` | The vendor exchanges expected, in order. Each has a `request` and a `response`. |
 | `reply` | The reply of the test server expected. |
+
+A case marked `"live": true` also runs in live mode.
 
 A step can send back the message an earlier step returned. In its arguments,
 `{"$reply_message": N}` stands for the assistant message of step `N`'s reply,

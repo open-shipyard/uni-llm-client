@@ -6,7 +6,7 @@
     "content-type": "application/json"
   },
   "json": {
-    "model": "anthropic/claude-haiku-4.5",
+    "model": "openai/gpt-oss-20b",
     "reasoning": {
       "effort": "low"
     },
@@ -32,8 +32,12 @@
     ],
     "messages": [
       {
+        "role": "system",
+        "content": "You must call the get_weather tool before answering. Never answer from memory."
+      },
+      {
         "role": "user",
-        "content": "What is the weather in Lyon?"
+        "content": "Use the get_weather tool to get the weather in Lyon."
       }
     ],
     "stream": true

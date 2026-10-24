@@ -6,7 +6,7 @@
     "content-type": "application/json"
   },
   "json": {
-    "model": "anthropic/claude-haiku-4.5",
+    "model": "openai/gpt-oss-20b",
     "messages": [
       {
         "role": "system",
@@ -61,8 +61,7 @@
           {
             "type": "reasoning.text",
             "text": "Lyon needs a lookup.",
-            "signature": "sig_or_t1",
-            "format": "anthropic-claude-v1",
+            "format": "unknown",
             "index": 0
           }
         ]

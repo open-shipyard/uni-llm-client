@@ -1,5 +1,5 @@
 {
-  "model": "openrouter/anthropic/claude-haiku-4.5",
+  "model": "openrouter/openai/gpt-oss-20b",
   "system": "Answer briefly.",
   "tools": [
     {

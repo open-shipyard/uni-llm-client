@@ -2,7 +2,11 @@
   "events": [
     {
       "type": "reasoning_delta",
-      "text": "Need weather."
+      "text": "Need"
+    },
+    {
+      "type": "reasoning_delta",
+      "text": " weather."
     },
     {
       "type": "tool_use_start",
@@ -68,9 +72,8 @@
                 {
                   "type": "reasoning.text",
                   "text": "Need weather.",
-                  "index": 0,
-                  "format": "anthropic-claude-v1",
-                  "signature": "sig_or1"
+                  "format": "unknown",
+                  "index": 0
                 }
               ]
             }

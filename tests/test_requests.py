@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from conftest import MockVendor, VendorCall, call
+from live import check_live_step
 
 HERE = Path(__file__).parent
 PAYLOADS = HERE / "reusable_payloads"
@@ -75,18 +76,58 @@ def without_error_message(reply: dict[str, Any]) -> dict[str, Any]:
     return reply
 
 
+def save_live_step(
+    vendor: MockVendor, folder: str, number: int, call_args: dict[str, Any], reply: Any
+) -> None:
+    """Write the step's exchanges, as payloads, to the run's recordings."""
+    exchanges = [
+        {
+            "request": {
+                "method": c.method,
+                "url": c.url,
+                "headers": c.headers,
+                "json": c.json,
+            },
+            "response": c.response,
+        }
+        for c in vendor.calls
+    ]
+    path = vendor.recordings / folder / f"step-{number}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    step = {"args": call_args, "vendor": exchanges, "reply": reply}
+    path.write_text(json.dumps(step, indent=2, ensure_ascii=False) + "\n")
+
+
+def sends_back(value: Any) -> bool:
+    """Whether `value` holds a ``{"$reply_message": N}``."""
+    if isinstance(value, dict):
+        return "$reply_message" in value or any(map(sends_back, value.values()))
+    if isinstance(value, list):
+        return any(map(sends_back, value))
+    return False
+
+
 @pytest.mark.parametrize("case", CASES, ids=[case["name"] for case in CASES])
 def test_sends_the_expected_vendor_requests(
-    implementation: str, vendor: MockVendor, case: dict[str, Any]
+    implementation: str,
+    vendor: MockVendor,
+    case: dict[str, Any],
+    request: pytest.FixtureRequest,
 ) -> None:
+    live = vendor.live_key is not None
+    folder = f"{case['name']}/{request.node.callspec.params['implementation']}"
     replies: list[dict[str, Any]] = []
     for number, step in enumerate(case["steps"]):
         (name,) = [key for key in CALLS if key in step]
         vendor.serve([payload(exchange["response"]) for exchange in step["vendor"]])
 
-        args = replayed(payload(step[name]), replies)
-        reply = call(implementation, name, {"api_keys": API_KEYS, **args})
+        raw_args = payload(step[name])
+        args = replayed(raw_args, replies)
+        call_args = {"api_keys": API_KEYS, **args}
+        reply = call(implementation, name, call_args)
         replies.append(reply)
+        if live:
+            save_live_step(vendor, folder, number, {name: call_args}, reply)
 
         expected = [
             arguments_parsed(payload(exchange["request"]))
@@ -95,6 +136,12 @@ def test_sends_the_expected_vendor_requests(
         # Extra calls are compared whole; missing ones show as a shorter list.
         padded = expected + [None] * (len(vendor.calls) - len(expected))
         calls = [sent(c, e) for c, e in zip(vendor.calls, padded, strict=False)]
-        assert calls == expected, f"step {number}: vendor requests"
         expected_reply = payload(step["reply"])
+        if live:
+            # A live step that sends back a real reply sends what the model said.
+            if not sends_back(raw_args):
+                assert calls == expected, f"step {number}: vendor requests"
+            check_live_step(name, reply, expected_reply, vendor.calls)
+            continue
+        assert calls == expected, f"step {number}: vendor requests"
         assert without_error_message(reply) == expected_reply, f"step {number}: reply"

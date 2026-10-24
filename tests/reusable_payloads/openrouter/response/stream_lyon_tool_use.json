@@ -7,50 +7,19 @@
     {
       "data": {
         "id": "gen-s1",
+        "model": "openai/gpt-oss-20b",
         "choices": [
           {
             "index": 0,
             "delta": {
               "role": "assistant",
               "content": "",
-              "reasoning": "Need weather."
-            }
-          }
-        ]
-      }
-    },
-    {
-      "data": {
-        "id": "gen-s1",
-        "choices": [
-          {
-            "index": 0,
-            "delta": {
+              "reasoning": "Need",
               "reasoning_details": [
                 {
                   "type": "reasoning.text",
-                  "text": "Need ",
-                  "index": 0,
-                  "format": "anthropic-claude-v1"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "data": {
-        "id": "gen-s1",
-        "choices": [
-          {
-            "index": 0,
-            "delta": {
-              "reasoning_details": [
-                {
-                  "type": "reasoning.text",
-                  "text": "weather.",
-                  "signature": "sig_or1",
+                  "text": "Need",
+                  "format": "unknown",
                   "index": 0
                 }
               ]
@@ -62,10 +31,35 @@
     {
       "data": {
         "id": "gen-s1",
+        "model": "openai/gpt-oss-20b",
         "choices": [
           {
             "index": 0,
             "delta": {
+              "role": "assistant",
+              "reasoning": " weather.",
+              "reasoning_details": [
+                {
+                  "type": "reasoning.text",
+                  "text": " weather.",
+                  "format": "unknown",
+                  "index": 0
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
               "tool_calls": [
                 {
                   "index": 0,
@@ -85,10 +79,12 @@
     {
       "data": {
         "id": "gen-s1",
+        "model": "openai/gpt-oss-20b",
         "choices": [
           {
             "index": 0,
             "delta": {
+              "role": "assistant",
               "tool_calls": [
                 {
                   "index": 0,
@@ -105,10 +101,12 @@
     {
       "data": {
         "id": "gen-s1",
+        "model": "openai/gpt-oss-20b",
         "choices": [
           {
             "index": 0,
             "delta": {
+              "role": "assistant",
               "tool_calls": [
                 {
                   "index": 0,
@@ -125,10 +123,13 @@
     {
       "data": {
         "id": "gen-s1",
+        "model": "openai/gpt-oss-20b",
         "choices": [
           {
             "index": 0,
-            "delta": {},
+            "delta": {
+              "role": "assistant"
+            },
             "finish_reason": "tool_calls"
           }
         ]
@@ -137,7 +138,16 @@
     {
       "data": {
         "id": "gen-s1",
-        "choices": [],
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant"
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
         "usage": {
           "prompt_tokens": 120,
           "completion_tokens": 30,
