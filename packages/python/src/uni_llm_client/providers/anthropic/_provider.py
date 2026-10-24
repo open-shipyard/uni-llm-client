@@ -252,6 +252,9 @@ def _message(message: Message, provider: str) -> dict[str, Any]:
     ):
         return {"role": "assistant", "content": message.vendor.content}
     blocks = [raw for block in message.content if (raw := _raw_block(block))]
+    # The API requires tool results before any other block (MSG-3); the sort is
+    # stable, so every other block keeps its order.
+    blocks.sort(key=lambda raw: raw["type"] != "tool_result")
     content: Any = blocks
     if len(blocks) == 1 and blocks[0]["type"] == "text":
         content = blocks[0]["text"]
