@@ -1,12 +1,13 @@
 [
   {
     "name": "openrouter-question",
+    "live": true,
     "steps": [
       {
-        "ask": "uni-llm-client/request/openrouter_haiku_4_5_question",
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
         "vendor": [
           {
-            "request": "openrouter/request/haiku_4_5_question",
+            "request": "openrouter/request/gpt_oss_20b_question",
             "response": "openrouter/response/answer"
           }
         ],
@@ -18,10 +19,10 @@
     "name": "openrouter-effort-and-web-search",
     "steps": [
       {
-        "ask": "uni-llm-client/request/openrouter_haiku_4_5_medium_effort_web_search",
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_medium_effort_web_search",
         "vendor": [
           {
-            "request": "openrouter/request/haiku_4_5_medium_effort_web_search",
+            "request": "openrouter/request/gpt_oss_20b_medium_effort_web_search",
             "response": "openrouter/response/answer"
           }
         ],
@@ -31,6 +32,7 @@
   },
   {
     "name": "openrouter-streamed-tool-call",
+    "live": true,
     "steps": [
       {
         "stream": "uni-llm-client/request/stream_lyon_ask",

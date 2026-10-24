@@ -4,7 +4,8 @@
 """Runs every case against every implementation listed in implementations.json.
 
 The mock vendor records each request it receives and serves the responses a case
-gives it. Each implementation's test server sends its vendor requests there.
+gives it. Each implementation's test server sends its vendor requests there. With
+``--live openrouter``, it forwards them to OpenRouter instead, with the real key.
 """
 
 import json
@@ -13,6 +14,7 @@ import re
 import select
 import subprocess
 import threading
+import time
 import urllib.request
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -28,6 +30,11 @@ IMPLEMENTATIONS: dict[str, dict[str, Any]] = json.loads(
     (HERE / "implementations.json").read_text()
 )
 STARTUP_TIMEOUT = 120.0  # The first `uv run` may install the environment.
+LIVE_HOST = "openrouter.ai"
+LIVE_KEY_ENV = "OPENROUTER_API_KEY"
+LIVE_TIMEOUT = 120.0
+# Each live run saves what the vendor answered here, one folder per run.
+LIVE_RECORDINGS = HERE / ".live"
 
 # Calls to 127.0.0.1 must not go through a proxy from the environment.
 _opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -39,12 +46,24 @@ class VendorCall:
     url: str
     headers: dict[str, str]
     json: Any
+    status: int = 0
+    """The status the vendor answered with."""
+    error_body: str = ""
+    """The body of a live error response, to show in failures."""
+    response: dict[str, Any] | None = None
+    """What the live vendor answered, in the form of a vendor response payload."""
 
 
 class MockVendor:
-    """Records the requests it receives and serves the responses it is given."""
+    """Records the requests it receives and serves the responses it is given.
 
-    def __init__(self) -> None:
+    With a `live_key`, it forwards each request to the vendor instead, with that
+    key in place of the one the implementation sent.
+    """
+
+    def __init__(self, live_key: str | None = None) -> None:
+        self.live_key = live_key
+        self.recordings = LIVE_RECORDINGS / time.strftime("%Y%m%d-%H%M%S")
         self.calls: list[VendorCall] = []
         self._responses: list[dict[str, Any]] = []
         self._server = ThreadingHTTPServer(("127.0.0.1", 0), self._handler())
@@ -70,26 +89,23 @@ class MockVendor:
             def do_POST(self) -> None:
                 body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
                 headers = {k.lower(): v for k, v in self.headers.items()}
-                vendor.calls.append(
-                    VendorCall(
-                        method=self.command,
-                        # Implementations keep the vendor's Host header and path.
-                        url=f"https://{headers.get('host')}{self.path}",
-                        headers=headers,
-                        json=json.loads(body) if body else None,
-                    )
+                recorded = VendorCall(
+                    method=self.command,
+                    # Implementations keep the vendor's Host header and path.
+                    url=f"https://{headers.get('host')}{self.path}",
+                    headers=headers,
+                    json=json.loads(body) if body else None,
                 )
-                if vendor._responses:
-                    response = vendor._responses.pop(0)
+                vendor.calls.append(recorded)
+                if vendor.live_key is not None:
+                    status, content_type, reply = vendor.forward(recorded, body)
+                    recorded.response = response_payload(status, content_type, reply)
+                    if status >= 400:
+                        recorded.error_body = reply.decode(errors="replace")
                 else:
-                    response = {"status": 500, "body": {"error": "no response left"}}
-                if "events" in response:
-                    reply = sse(response["events"])
-                    content_type = "text/event-stream"
-                else:
-                    reply = json.dumps(response["body"]).encode()
-                    content_type = "application/json"
-                self.send_response(response["status"])
+                    status, content_type, reply = vendor.mocked()
+                recorded.status = status
+                self.send_response(status)
                 self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(reply)))
                 self.end_headers()
@@ -99,6 +115,89 @@ class MockVendor:
                 pass
 
         return Handler
+
+    def mocked(self) -> tuple[int, str, bytes]:
+        if self._responses:
+            response = self._responses.pop(0)
+        else:
+            response = {"status": 500, "body": {"error": "no response left"}}
+        if "events" in response:
+            return response["status"], "text/event-stream", sse(response["events"])
+        body = json.dumps(response["body"]).encode()
+        return response["status"], "application/json", body
+
+    def forward(self, recorded: VendorCall, body: bytes) -> tuple[int, str, bytes]:
+        if not recorded.url.startswith(f"https://{LIVE_HOST}/"):
+            error = {"error": f"live mode forwards only to {LIVE_HOST}"}
+            return 502, "application/json", json.dumps(error).encode()
+        request = urllib.request.Request(
+            recorded.url,
+            data=body,
+            method=recorded.method,
+            headers={
+                "Content-Type": recorded.headers.get("content-type", ""),
+                "Authorization": f"Bearer {self.live_key}",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=LIVE_TIMEOUT) as response:
+                content_type = response.headers.get("Content-Type", "")
+                return response.status, content_type, response.read()
+        except urllib.error.HTTPError as error:
+            content_type = error.headers.get("Content-Type", "")
+            return error.code, content_type, error.read()
+
+
+def response_payload(status: int, content_type: str, body: bytes) -> dict[str, Any]:
+    """A vendor response payload, as `MockVendor.mocked` serves it."""
+    text = body.decode(errors="replace")
+    if content_type.startswith("text/event-stream"):
+        return {"status": status, "events": sse_events(text)}
+    try:
+        return {"status": status, "body": json.loads(text)}
+    except ValueError:
+        return {"status": status, "body": text}
+
+
+def sse_events(text: str) -> list[dict[str, Any]]:
+    """The events of a server-sent event stream, as `sse` writes them."""
+    events: list[dict[str, Any]] = []
+    for frame in text.replace("\r\n", "\n").split("\n\n"):
+        event: dict[str, Any] = {}
+        data = []
+        for line in frame.splitlines():
+            name, _, value = line.partition(":")
+            value = value.removeprefix(" ")
+            if name == "":
+                events.append({"comment": value})
+            elif name == "event":
+                event["event"] = value
+            elif name == "data":
+                data.append(value)
+        if data:
+            joined = "\n".join(data)
+            try:
+                event["data"] = json.loads(joined)
+            except ValueError:
+                event["data"] = joined
+            events.append(event)
+    return events
+
+
+def live_key() -> str:
+    """The OpenRouter key, from the environment or ``~/.env``. Never printed."""
+    key = os.environ.get(LIVE_KEY_ENV, "")
+    env_file = Path.home() / ".env"
+    if not key and env_file.exists():
+        for line in env_file.read_text().splitlines():
+            name, _, value = line.removeprefix("export ").partition("=")
+            if name.strip() == LIVE_KEY_ENV:
+                key = value.strip().strip("'\"")
+    if not key:
+        raise pytest.UsageError(
+            f"--live needs {LIVE_KEY_ENV}, in the environment or ~/.env"
+        )
+    return key
 
 
 def sse(events: list[dict[str, Any]]) -> bytes:
@@ -128,6 +227,37 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         choices=sorted({spec["package"] for spec in IMPLEMENTATIONS.values()}),
         help="Test every implementation of a package; repeat for several.",
     )
+    parser.addoption(
+        "--live",
+        choices=["openrouter"],
+        help="Run the cases marked live against the real vendor. Costs money.",
+    )
+
+
+RECORDINGS_KEY = pytest.StashKey[Path]()
+
+
+def pytest_terminal_summary(
+    terminalreporter: pytest.TerminalReporter, config: pytest.Config
+) -> None:
+    recordings = config.stash.get(RECORDINGS_KEY, None)
+    if recordings is not None:
+        terminalreporter.write_line(f"live exchanges saved in {recordings}")
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    if not config.getoption("live"):
+        return
+    selected: list[pytest.Item] = []
+    deselected: list[pytest.Item] = []
+    for item in items:
+        callspec = getattr(item, "callspec", None)
+        case = callspec.params.get("case") if callspec else None
+        (selected if case and case.get("live") else deselected).append(item)
+    config.hook.pytest_deselected(items=deselected)
+    items[:] = selected
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
@@ -140,10 +270,13 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
 
 @pytest.fixture(scope="session")
-def mock_vendor() -> Iterator[MockVendor]:
-    vendor = MockVendor()
+def mock_vendor(request: pytest.FixtureRequest) -> Iterator[MockVendor]:
+    live = request.config.getoption("live")
+    vendor = MockVendor(live_key() if live else None)
     yield vendor
     vendor.close()
+    if live and vendor.recordings.exists():
+        request.config.stash[RECORDINGS_KEY] = vendor.recordings
 
 
 @pytest.fixture
