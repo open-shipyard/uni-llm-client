@@ -41,6 +41,13 @@ reach, such as an edge of a pure function or the environment the package runs
 in. A port's test that adds no line or branch to the HTTP tests' coverage is
 removed.
 
+A few HTTP tests wait in real time, such as the tests of the waits before a
+retry. They are marked `slow`. A plain run includes them, and so does CI. A
+quick local run skips them with `-m "not slow"`:
+
+    cd tests
+    uv run pytest -m "not slow"
+
 ## Coverage
 
 Coverage comes from the HTTP tests in [`tests`](tests/README.md) alone. Each

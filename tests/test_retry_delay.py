@@ -17,6 +17,8 @@ import pytest
 
 from conftest import API_KEYS, MockVendor, call, payload
 
+pytestmark = pytest.mark.slow
+
 SLACK = 0.05
 QUESTION = "uni-llm-client/request/opus_5_question"
 # A backoff of 0.1875 to 0.25 s, and up to 0.1 s for a vendor to ask: far

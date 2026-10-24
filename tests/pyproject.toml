@@ -27,4 +27,7 @@ files = ["."]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-config", "--strict-markers"]
+markers = [
+    "slow: tests that take seconds because they wait in real time",
+]
 xfail_strict = true
