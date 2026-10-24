@@ -70,5 +70,96 @@
         "reply": "uni-llm-client/response/stream_openrouter_provider_error"
       }
     ]
+  },
+  {
+    "name": "openrouter-ask-cut-at-length",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/truncated"
+          }
+        ],
+        "reply": "uni-llm-client/response/incomplete_response"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-refusal",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/refusal"
+          }
+        ],
+        "reply": "uni-llm-client/response/refusal"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-auth-error",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/auth_error"
+          }
+        ],
+        "reply": "uni-llm-client/response/authentication"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-rate-limit",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/rate_limit"
+          },
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/rate_limit"
+          },
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/rate_limit"
+          }
+        ],
+        "reply": "uni-llm-client/response/rate_limit"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-error-in-a-200",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/server_error"
+          },
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/server_error"
+          },
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/server_error"
+          }
+        ],
+        "reply": "uni-llm-client/response/provider"
+      }
+    ]
   }
 ]

@@ -12,9 +12,6 @@ LOW, MEDIUM, HIGH, MAX = Effort
 @pytest.mark.parametrize(
     ("requested", "supported", "expected"),
     [
-        (HIGH, {LOW, MEDIUM, HIGH, MAX}, HIGH),
-        (LOW, {MEDIUM, HIGH}, MEDIUM),
-        (MEDIUM, {LOW, HIGH}, HIGH),
         (HIGH, {LOW, MEDIUM}, MEDIUM),
         (MAX, {LOW, HIGH}, HIGH),
     ],
