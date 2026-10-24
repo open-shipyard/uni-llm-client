@@ -12,6 +12,11 @@ and this project adheres to
 
 - Initial Python project structure.
 
+### Changed
+
+- The HTTP layer uses `httpx2` instead of `httpx`. An `http_client` passed to
+  a client must be an `httpx2.Client` or `httpx2.AsyncClient`.
+
 ### Fixed
 
 - Importing from a source checkout that is not installed no longer raises

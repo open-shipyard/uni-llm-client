@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from types import TracebackType
 from typing import Self
 
-import httpx
+import httpx2
 
 from uni_llm_client._effort import Effort
 from uni_llm_client._errors import IncompleteResponseError
@@ -15,7 +15,7 @@ from uni_llm_client._registry import ProviderRegistry
 from uni_llm_client.providers._base import MAX_REQUESTS
 
 # Answers can take minutes, especially at high effort.
-DEFAULT_TIMEOUT = httpx.Timeout(600.0, connect=10.0)
+DEFAULT_TIMEOUT = httpx2.Timeout(600.0, connect=10.0)
 
 
 class Client:
@@ -31,10 +31,10 @@ class Client:
         self,
         *,
         api_keys: Mapping[str, str] | None = None,
-        http_client: httpx.Client | None = None,
+        http_client: httpx2.Client | None = None,
     ) -> None:
         self._registry = ProviderRegistry(api_keys)
-        self._http = http_client or httpx.Client(timeout=DEFAULT_TIMEOUT)
+        self._http = http_client or httpx2.Client(timeout=DEFAULT_TIMEOUT)
 
     def ask(
         self,

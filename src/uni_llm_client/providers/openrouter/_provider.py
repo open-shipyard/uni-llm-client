@@ -5,7 +5,7 @@
 
 from typing import Any, NoReturn
 
-import httpx
+import httpx2
 
 from uni_llm_client._effort import Effort
 from uni_llm_client._errors import IncompleteResponseError, ProviderError, RefusalError
@@ -22,7 +22,7 @@ class OpenRouterProvider(Provider):
 
     def build_request(
         self, model: str, question: str, *, web_search: bool, effort: Effort | None
-    ) -> httpx.Request:
+    ) -> httpx2.Request:
         body: dict[str, Any] = {
             "model": model,
             "messages": [{"role": "user", "content": question}],
@@ -33,9 +33,9 @@ class OpenRouterProvider(Provider):
         if web_search:
             body["tools"] = [{"type": "openrouter:web_search"}]
         headers = {"Authorization": f"Bearer {self.api_key}"}
-        return httpx.Request("POST", API_URL, headers=headers, json=body)
+        return httpx2.Request("POST", API_URL, headers=headers, json=body)
 
-    def parse_response(self, response: httpx.Response) -> str:
+    def parse_response(self, response: httpx2.Response) -> str:
         if response.is_error:
             _raise(_error_body(response), response.status_code)
         body = response.json()
@@ -69,7 +69,7 @@ def _text(content: str | list[dict[str, Any]] | None) -> str:
     return content or ""
 
 
-def _error_body(response: httpx.Response) -> dict[str, Any]:
+def _error_body(response: httpx2.Response) -> dict[str, Any]:
     try:
         error = response.json()["error"]
     except (ValueError, KeyError, TypeError):
