@@ -12,8 +12,7 @@ from typing import Any
 
 import pytest
 
-from conftest import MockVendor, call
-from test_requests import API_KEYS, payload
+from conftest import API_KEYS, MockVendor, call, payload
 
 QUESTIONS = {
     "anthropic": "uni-llm-client/request/opus_5_question",

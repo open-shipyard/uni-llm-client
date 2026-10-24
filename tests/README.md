@@ -85,14 +85,23 @@ closes the connection without an answer, as a network fault would. A `delay`
 in seconds makes the mock vendor answer late, as a slow vendor does. A request
 that finds no response left gets a 500.
 
+The mock vendor turns a header value `{"$http_date": "GMT"}` into an HTTP date.
+The date is the next whole second at least 0.05 s ahead. `"-0000"` in place of
+`"GMT"` writes the same time without a zone. The mock vendor records when each request arrives.
+
 A new behaviour usually needs a new case. Reuse a payload when one fits.
 
 ## Parametrized tests
 
 Some rules hold for many inputs, and a case per input would repeat itself.
 These rules get a parametrized test in this folder instead, with one row per
-input. They call the same test servers. `test_retryable.py` checks which vendor
-answers are retried, by counting the vendor requests.
+input. They call the same test servers.
+
+- `test_retryable.py` checks which vendor answers are retried, by counting the
+  vendor requests.
+- `test_retry_delay.py` checks how long the clients wait before a retry. The
+  clients get waits of a fraction of a second, and a wait is the time between
+  two vendor requests.
 
 ## Test server protocol
 
@@ -107,7 +116,7 @@ the repository root, and appends `--vendor-url URL`.
    host, such as `api.anthropic.com`.
 3. `POST /ask`, `POST /complete` and `POST /stream` take the arguments of the
    call as a JSON object. Each calls it with a new client created with the
-   given `api_keys` and `providers`, and `max_retries` when given.
+   given `api_keys` and `providers`, and the retry options when given.
 4. The server replies with status 200. A library error replies
    `{"error": {"type": "...", "message": "..."}}`.
 5. `ask` replies `{"answer": "..."}`. `complete` replies
@@ -140,7 +149,7 @@ included.
 
 | Value | JSON |
 |---|---|
-| Arguments | `model`, `messages`, and optionally `system`, `tools`, `web_search`, `effort`, `max_tokens`, `timeout`, `api_keys`, `providers` and `max_retries`. |
+| Arguments | `model`, `messages`, and optionally `system`, `tools`, `web_search`, `effort`, `max_tokens`, `timeout`, `api_keys`, `providers`, `max_retries`, `initial_retry_delay`, `max_retry_delay` and `max_retry_after`. |
 | Providers | By name: `kind`, and optionally `api_key` and `base_url`. |
 | Message | `role`, `content`, a list of blocks, and `vendor`: `{"kind": "...", "content": ...}` or `null`. |
 | Block | `type` and the block's fields. The types are `text`, `reasoning`, `tool_use`, `tool_result`, `server_tool_use` and `server_tool_result`. |

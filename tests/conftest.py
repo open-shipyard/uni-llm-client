@@ -9,6 +9,7 @@ gives it. Each implementation's test server sends its vendor requests there. Wit
 """
 
 import contextlib
+import email.utils
 import json
 import os
 import re
@@ -18,7 +19,8 @@ import threading
 import time
 import urllib.request
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -27,6 +29,8 @@ import pytest
 
 HERE = Path(__file__).parent
 REPO = HERE.parent
+PAYLOADS = HERE / "reusable_payloads"
+API_KEYS = {"anthropic": "test-key", "openrouter": "test-key"}
 IMPLEMENTATIONS: dict[str, dict[str, Any]] = json.loads(
     (HERE / "implementations.json").read_text()
 )
@@ -53,6 +57,10 @@ class VendorCall:
     """The body of a live error response, to show in failures."""
     response: dict[str, Any] | None = None
     """What the live vendor answered, in the form of a vendor response payload."""
+    at: float = field(default_factory=time.time)
+    """When the request arrived, as a POSIX timestamp."""
+    response_headers: dict[str, str] = field(default_factory=dict)
+    """The extra headers of the mocked response."""
 
 
 class MockVendor:
@@ -111,6 +119,7 @@ class MockVendor:
                         self.close_connection = True
                         return
                     status, content_type, reply, extra_headers = mocked
+                    recorded.response_headers = extra_headers
                 recorded.status = status
                 self.send_response(status)
                 self.send_header("Content-Type", content_type)
@@ -138,7 +147,10 @@ class MockVendor:
             return None
         # A slow vendor: the answer comes after `delay` seconds.
         time.sleep(response.get("delay", 0))
-        headers: dict[str, str] = response.get("headers", {})
+        headers = {
+            name: http_date(value["$http_date"]) if isinstance(value, dict) else value
+            for name, value in response.get("headers", {}).items()
+        }
         if "events" in response:
             return (
                 response["status"],
@@ -169,6 +181,19 @@ class MockVendor:
         except urllib.error.HTTPError as error:
             content_type = error.headers.get("Content-Type", "")
             return error.code, content_type, error.read()
+
+
+def http_date(zone: str) -> str:
+    """An HTTP date in `zone`: the next whole second at least 0.05 s ahead."""
+    when = datetime.fromtimestamp(int(time.time() + 1.05), UTC)
+    if zone == "GMT":
+        return email.utils.format_datetime(when, usegmt=True)
+    # "-0000": a UTC time from an unknown zone
+    return email.utils.format_datetime(when.replace(tzinfo=None))
+
+
+def payload(name: str) -> Any:
+    return json.loads((PAYLOADS / f"{name}.json").read_text())
 
 
 def response_payload(status: int, content_type: str, body: bytes) -> dict[str, Any]:

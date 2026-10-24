@@ -7,22 +7,16 @@ from typing import Any
 
 import pytest
 
-from conftest import MockVendor, VendorCall, call
+from conftest import API_KEYS, MockVendor, VendorCall, call, payload
 from live import check_live_step
 
 HERE = Path(__file__).parent
-PAYLOADS = HERE / "reusable_payloads"
-API_KEYS = {"anthropic": "test-key", "openrouter": "test-key"}
 CALLS = ("ask", "complete", "stream")
 CASES = [
     case
     for path in sorted((HERE / "cases").glob("*.json"))
     for case in json.loads(path.read_text())
 ]
-
-
-def payload(name: str) -> Any:
-    return json.loads((PAYLOADS / f"{name}.json").read_text())
 
 
 def replayed(value: Any, replies: list[dict[str, Any]]) -> Any:

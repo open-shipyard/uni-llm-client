@@ -162,9 +162,17 @@ def ask_kwargs(args: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+RETRY_OPTIONS = (
+    "max_retries",
+    "initial_retry_delay",
+    "max_retry_delay",
+    "max_retry_after",
+)
+
+
 def client_kwargs(args: dict[str, Any]) -> dict[str, Any]:
-    """The arguments of the client: `api_keys`, `providers`, and `max_retries`
-    when given."""
+    """The arguments of the client: `api_keys`, `providers`, and the retry
+    options when given."""
     providers = args.get("providers") or {}
     kwargs: dict[str, Any] = {
         "api_keys": args.get("api_keys"),
@@ -172,8 +180,9 @@ def client_kwargs(args: dict[str, Any]) -> dict[str, Any]:
             name: ProviderConfig(**config) for name, config in providers.items()
         },
     }
-    if "max_retries" in args:
-        kwargs["max_retries"] = args["max_retries"]
+    for name in RETRY_OPTIONS:
+        if name in args:
+            kwargs[name] = args[name]
     return kwargs
 
 
