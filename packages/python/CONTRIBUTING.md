@@ -3,6 +3,11 @@
 See the [repository's CONTRIBUTING.md](../../CONTRIBUTING.md) first. Its
 coverage rules apply here.
 
+## Dependencies
+
+The only runtime dependency allowed is `httpx2`. Everything else comes from the
+standard library. Development tools go in the `dev` dependency group.
+
 ## Coverage
 
 The test server in `tests/server.py` runs under coverage.py during the HTTP

@@ -25,6 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
+# The only runtime dependency allowed is httpx2. See CONTRIBUTING.md.
 dependencies = [
     "httpx2>=2.16",
 ]

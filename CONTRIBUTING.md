@@ -31,6 +31,16 @@ everything. The `ci-ok` job passes when every other job passed or was skipped.
 Each package has its own SonarQube Cloud project, set in its
 `sonar-project.properties`. The root project covers `.github` and `tests`.
 
+## Tests
+
+The HTTP tests in [`tests`](tests/README.md) are the tests of every port. A new
+behaviour gets an HTTP case, and every port passes it.
+
+A port's own tests are the exception. They cover only what no HTTP case can
+reach, such as an edge of a pure function or the environment the package runs
+in. A port's test that adds no line or branch to the HTTP tests' coverage is
+removed.
+
 ## Coverage
 
 Coverage comes from the HTTP tests in [`tests`](tests/README.md) alone. Each
