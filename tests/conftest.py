@@ -97,17 +97,20 @@ class MockVendor:
                     json=json.loads(body) if body else None,
                 )
                 vendor.calls.append(recorded)
+                extra_headers: dict[str, str] = {}
                 if vendor.live_key is not None:
                     status, content_type, reply = vendor.forward(recorded, body)
                     recorded.response = response_payload(status, content_type, reply)
                     if status >= 400:
                         recorded.error_body = reply.decode(errors="replace")
                 else:
-                    status, content_type, reply = vendor.mocked()
+                    status, content_type, reply, extra_headers = vendor.mocked()
                 recorded.status = status
                 self.send_response(status)
                 self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(reply)))
+                for name, value in extra_headers.items():
+                    self.send_header(name, value)
                 self.end_headers()
                 self.wfile.write(reply)
 
@@ -116,15 +119,19 @@ class MockVendor:
 
         return Handler
 
-    def mocked(self) -> tuple[int, str, bytes]:
+    def mocked(self) -> tuple[int, str, bytes, dict[str, str]]:
+        """The next response to serve: its status, content type, body and extra
+        headers."""
         if self._responses:
             response = self._responses.pop(0)
         else:
             response = {"status": 500, "body": {"error": "no response left"}}
+        headers: dict[str, str] = response.get("headers", {})
         if "events" in response:
-            return response["status"], "text/event-stream", sse(response["events"])
+            events = sse(response["events"])
+            return response["status"], "text/event-stream", events, headers
         body = json.dumps(response["body"]).encode()
-        return response["status"], "application/json", body
+        return response["status"], "application/json", body, headers
 
     def forward(self, recorded: VendorCall, body: bytes) -> tuple[int, str, bytes]:
         if not recorded.url.startswith(f"https://{LIVE_HOST}/"):

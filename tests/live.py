@@ -48,7 +48,7 @@ def check_response(actual: dict[str, Any], expected: dict[str, Any]) -> None:
         assert text_of(actual).strip(), "the model wrote no text"
     message = actual["message"]
     assert message["role"] == "assistant"
-    assert message["vendor"]["provider"] == expected["message"]["vendor"]["provider"]
+    assert message["vendor"]["kind"] == expected["message"]["vendor"]["kind"]
     assert actual["usage"]["input_tokens"] > 0, actual["usage"]
     assert actual["usage"]["output_tokens"] > 0, actual["usage"]
 
