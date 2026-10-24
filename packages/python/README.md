@@ -22,8 +22,10 @@ with Client() as client:  # reads ANTHROPIC_API_KEY, OPENROUTER_API_KEY
 A call that fails with a rate limit, a vendor error (5xx), a timeout or a lost
 connection is sent again, twice by default, after waiting as long as the vendor
 asks, or from half a second up to 8 seconds. `Client(max_retries=5)` changes
-the number of retries and `max_retries=0` turns them off. A connection failure
-or a timeout raises `TransportError`, a `UniLLMError` like the vendor errors.
+the number of retries and `max_retries=0` turns them off. Three options change
+the waits: `initial_retry_delay`, `max_retry_delay` and `max_retry_after`. A
+connection failure or a timeout raises `TransportError`, a `UniLLMError` like
+the vendor errors.
 
 A conversation with tools, streamed:
 

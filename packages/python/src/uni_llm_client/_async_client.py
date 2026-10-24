@@ -24,7 +24,10 @@ from uni_llm_client._events import Completed, StreamEvent
 from uni_llm_client._messages import Message, Response, StopReason, Tool
 from uni_llm_client._registry import ProviderRegistry
 from uni_llm_client._retry import (
+    DEFAULT_INITIAL_RETRY_DELAY,
     DEFAULT_MAX_RETRIES,
+    DEFAULT_MAX_RETRY_AFTER,
+    DEFAULT_MAX_RETRY_DELAY,
     RetryPolicy,
     wrap_transport_errors,
 )
@@ -52,6 +55,11 @@ class AsyncClient:
         http_client: HTTP client used to send requests; closed with this client.
         max_retries: Retries of a request that failed in a way that may pass, such
             as a rate limit, a vendor error or a lost connection; 0 disables them.
+        initial_retry_delay: Seconds before the first retry, doubled for each
+            one after, when the vendor asks for no wait.
+        max_retry_delay: The longest of those waits, in seconds.
+        max_retry_after: The longest wait a vendor can ask for, in seconds. A
+            vendor asking for longer gets the doubling wait instead.
     """
 
     def __init__(
@@ -61,8 +69,13 @@ class AsyncClient:
         providers: Mapping[str, ProviderConfig] | None = None,
         http_client: httpx2.AsyncClient | None = None,
         max_retries: int = DEFAULT_MAX_RETRIES,
+        initial_retry_delay: float = DEFAULT_INITIAL_RETRY_DELAY,
+        max_retry_delay: float = DEFAULT_MAX_RETRY_DELAY,
+        max_retry_after: float = DEFAULT_MAX_RETRY_AFTER,
     ) -> None:
-        self._retry = RetryPolicy(max_retries)
+        self._retry = RetryPolicy(
+            max_retries, initial_retry_delay, max_retry_delay, max_retry_after
+        )
         self._registry = ProviderRegistry(api_keys, providers)
         self._http = http_client or httpx2.AsyncClient(timeout=DEFAULT_TIMEOUT)
 
