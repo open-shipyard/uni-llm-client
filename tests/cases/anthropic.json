@@ -1,83 +1,111 @@
 [
   {
     "name": "anthropic-question",
-    "ask": "uni-llm-client/request/opus_5_question",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/opus_5_question",
-        "response": "anthropic/response/answer"
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "anthropic-adaptive-effort",
-    "ask": "uni-llm-client/request/opus_5_max_effort",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/opus_5_max_effort",
-        "response": "anthropic/response/answer"
+        "ask": "uni-llm-client/request/opus_5_max_effort",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_max_effort",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "anthropic-budget-effort",
-    "ask": "uni-llm-client/request/haiku_4_5_low_effort",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/haiku_4_5_low_effort",
-        "response": "anthropic/response/answer"
+        "ask": "uni-llm-client/request/haiku_4_5_low_effort",
+        "vendor": [
+          {
+            "request": "anthropic/request/haiku_4_5_low_effort",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "anthropic-budget-max-effort",
-    "ask": "uni-llm-client/request/haiku_4_5_max_effort",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/haiku_4_5_max_effort",
-        "response": "anthropic/response/answer"
+        "ask": "uni-llm-client/request/haiku_4_5_max_effort",
+        "vendor": [
+          {
+            "request": "anthropic/request/haiku_4_5_max_effort",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "anthropic-unknown-model",
-    "ask": "uni-llm-client/request/unknown_model_high_effort_web_search",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/unknown_model_high_effort_web_search",
-        "response": "anthropic/response/answer"
+        "ask": "uni-llm-client/request/unknown_model_high_effort_web_search",
+        "vendor": [
+          {
+            "request": "anthropic/request/unknown_model_high_effort_web_search",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "anthropic-paused-web-search",
-    "ask": "uni-llm-client/request/opus_5_web_search",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/opus_5_web_search",
-        "response": "anthropic/response/pause_turn"
-      },
-      {
-        "request": "anthropic/request/opus_5_web_search_resumed",
-        "response": "anthropic/response/web_search_answer"
+        "ask": "uni-llm-client/request/opus_5_web_search",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_web_search",
+            "response": "anthropic/response/pause_turn"
+          },
+          {
+            "request": "anthropic/request/opus_5_web_search_resumed",
+            "response": "anthropic/response/web_search_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "anthropic-rate-limit",
-    "ask": "uni-llm-client/request/opus_5_question",
-    "vendor": [
+    "steps": [
       {
-        "request": "anthropic/request/opus_5_question",
-        "response": "anthropic/response/rate_limit"
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/rate_limit"
+          }
+        ],
+        "reply": "uni-llm-client/response/rate_limit"
       }
-    ],
-    "reply": "uni-llm-client/response/rate_limit"
+    ]
   }
 ]

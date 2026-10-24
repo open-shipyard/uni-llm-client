@@ -1,20 +1,62 @@
 [
   {
     "name": "invalid-effort",
-    "ask": "uni-llm-client/request/invalid_effort",
-    "vendor": [],
-    "reply": "uni-llm-client/response/invalid_argument"
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/invalid_effort",
+        "vendor": [],
+        "reply": "uni-llm-client/response/invalid_argument"
+      }
+    ]
   },
   {
     "name": "unknown-provider",
-    "ask": "uni-llm-client/request/unknown_provider",
-    "vendor": [],
-    "reply": "uni-llm-client/response/invalid_argument"
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/unknown_provider",
+        "vendor": [],
+        "reply": "uni-llm-client/response/invalid_argument"
+      }
+    ]
   },
   {
     "name": "missing-api-key",
-    "ask": "uni-llm-client/request/missing_api_key",
-    "vendor": [],
-    "reply": "uni-llm-client/response/authentication"
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/missing_api_key",
+        "vendor": [],
+        "reply": "uni-llm-client/response/authentication"
+      }
+    ]
+  },
+  {
+    "name": "complete-without-messages",
+    "steps": [
+      {
+        "complete": "uni-llm-client/request/complete_without_messages",
+        "vendor": [],
+        "reply": "uni-llm-client/response/invalid_argument"
+      }
+    ]
+  },
+  {
+    "name": "complete-zero-max-tokens",
+    "steps": [
+      {
+        "complete": "uni-llm-client/request/complete_zero_max_tokens",
+        "vendor": [],
+        "reply": "uni-llm-client/response/invalid_argument"
+      }
+    ]
+  },
+  {
+    "name": "stream-invalid-effort",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_invalid_effort",
+        "vendor": [],
+        "reply": "uni-llm-client/response/stream_invalid_argument"
+      }
+    ]
   }
 ]

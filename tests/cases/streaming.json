@@ -1,0 +1,112 @@
+[
+  {
+    "name": "anthropic-streamed-tool-loop",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_paris_ask",
+        "vendor": [
+          {
+            "request": "anthropic/request/stream_paris_ask",
+            "response": "anthropic/response/stream_paris_tool_use"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_paris_tool_use"
+      },
+      {
+        "stream": "uni-llm-client/request/stream_paris_tool_result",
+        "vendor": [
+          {
+            "request": "anthropic/request/stream_paris_tool_result",
+            "response": "anthropic/response/stream_paris_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_paris_answer"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-streamed-tool-call",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_lyon_ask",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_lyon_ask",
+            "response": "openrouter/response/stream_lyon_tool_use"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_lyon_tool_use"
+      },
+      {
+        "complete": "uni-llm-client/request/stream_lyon_tool_result",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_lyon_tool_result",
+            "response": "openrouter/response/weather_lyon_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/weather_lyon_answer"
+      }
+    ]
+  },
+  {
+    "name": "anthropic-stream-cut-short",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_paris_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/stream_paris_question",
+            "response": "anthropic/response/stream_cut_short"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_cut_short"
+      }
+    ]
+  },
+  {
+    "name": "anthropic-stream-error-event",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_paris_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/stream_paris_question",
+            "response": "anthropic/response/stream_overloaded"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_provider_error"
+      }
+    ]
+  },
+  {
+    "name": "anthropic-stream-rate-limited",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_paris_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/stream_paris_question",
+            "response": "anthropic/response/rate_limit"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_rate_limit"
+      }
+    ]
+  },
+  {
+    "name": "openrouter-stream-error-chunk",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_openrouter_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_question",
+            "response": "openrouter/response/stream_error_chunk"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_openrouter_provider_error"
+      }
+    ]
+  }
+]

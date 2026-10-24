@@ -11,25 +11,12 @@ and this project adheres to
 ### Added
 
 - Initial Python project structure.
-- `complete`: send a conversation of messages, with a system prompt and
-  tools, and receive the model's message, stop reason and usage. Assistant
-  messages replay to their provider as they came, so signed reasoning and
-  tool blocks are kept. Specified in `docs/specs/messages.md`.
-- `stream`: the same, as events: text and reasoning deltas, tool calls as
-  they form, and the whole response last. Specified in
-  `docs/specs/streaming.md`.
+- Anthropic and OpenRouter support
 
 ### Changed
 
-- The Python package moved to `packages/python`, next to a new TypeScript port
-  in `packages/typescript`. Language-agnostic tests in `tests` check the vendor
-  requests of every port.
-- The HTTP layer uses `httpx2` instead of `httpx`. An `http_client` passed to
-  a client must be an `httpx2.Client` or `httpx2.AsyncClient`.
 
 ### Fixed
 
-- Importing from a source checkout that is not installed no longer raises
-  `PackageNotFoundError`; `__version__` is `"0+unknown"` there.
 
 [Unreleased]: https://github.com/open-shipyard/uni-llm-client/commits/main

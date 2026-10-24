@@ -1,0 +1,29 @@
+{
+  "response": {
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Paris is"
+        }
+      ],
+      "vendor": {
+        "provider": "anthropic",
+        "content": [
+          {
+            "type": "text",
+            "text": "Paris is"
+          }
+        ]
+      }
+    },
+    "stop_reason": "max_tokens",
+    "usage": {
+      "input_tokens": 14,
+      "output_tokens": 3,
+      "cached_input_tokens": 0,
+      "reasoning_tokens": 0
+    }
+  }
+}

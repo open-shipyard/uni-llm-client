@@ -1,0 +1,26 @@
+{
+  "response": {
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Lyon is 15°C and cloudy."
+        }
+      ],
+      "vendor": {
+        "provider": "openrouter",
+        "content": {
+          "content": "Lyon is 15°C and cloudy."
+        }
+      }
+    },
+    "stop_reason": "end_turn",
+    "usage": {
+      "input_tokens": 450,
+      "output_tokens": 12,
+      "cached_input_tokens": 0,
+      "reasoning_tokens": 0
+    }
+  }
+}

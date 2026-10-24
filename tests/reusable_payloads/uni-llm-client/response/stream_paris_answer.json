@@ -1,0 +1,42 @@
+{
+  "events": [
+    {
+      "type": "text_delta",
+      "text": "It is 18°C"
+    },
+    {
+      "type": "text_delta",
+      "text": " and sunny."
+    },
+    {
+      "type": "completed",
+      "response": {
+        "message": {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "It is 18°C and sunny."
+            }
+          ],
+          "vendor": {
+            "provider": "anthropic",
+            "content": [
+              {
+                "type": "text",
+                "text": "It is 18°C and sunny."
+              }
+            ]
+          }
+        },
+        "stop_reason": "end_turn",
+        "usage": {
+          "input_tokens": 80,
+          "output_tokens": 9,
+          "cached_input_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    }
+  ]
+}

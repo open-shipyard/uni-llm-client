@@ -1,24 +1,32 @@
 [
   {
     "name": "openrouter-question",
-    "ask": "uni-llm-client/request/openrouter_haiku_4_5_question",
-    "vendor": [
+    "steps": [
       {
-        "request": "openrouter/request/haiku_4_5_question",
-        "response": "openrouter/response/answer"
+        "ask": "uni-llm-client/request/openrouter_haiku_4_5_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/haiku_4_5_question",
+            "response": "openrouter/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   },
   {
     "name": "openrouter-effort-and-web-search",
-    "ask": "uni-llm-client/request/openrouter_haiku_4_5_medium_effort_web_search",
-    "vendor": [
+    "steps": [
       {
-        "request": "openrouter/request/haiku_4_5_medium_effort_web_search",
-        "response": "openrouter/response/answer"
+        "ask": "uni-llm-client/request/openrouter_haiku_4_5_medium_effort_web_search",
+        "vendor": [
+          {
+            "request": "openrouter/request/haiku_4_5_medium_effort_web_search",
+            "response": "openrouter/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
       }
-    ],
-    "reply": "uni-llm-client/response/answer"
+    ]
   }
 ]

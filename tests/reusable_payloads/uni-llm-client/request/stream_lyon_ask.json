@@ -1,0 +1,32 @@
+{
+  "model": "openrouter/anthropic/claude-haiku-4.5",
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Current weather in a city.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ]
+      }
+    }
+  ],
+  "effort": "low",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "What is the weather in Lyon?"
+        }
+      ]
+    }
+  ]
+}

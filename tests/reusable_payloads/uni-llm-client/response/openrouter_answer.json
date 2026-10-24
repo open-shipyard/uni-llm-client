@@ -1,0 +1,32 @@
+{
+  "response": {
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user asks for the capital of France.",
+          "redacted": false
+        },
+        {
+          "type": "text",
+          "text": "Paris is the capital of France."
+        }
+      ],
+      "vendor": {
+        "provider": "openrouter",
+        "content": {
+          "content": "Paris is the capital of France.",
+          "reasoning": "The user asks for the capital of France."
+        }
+      }
+    },
+    "stop_reason": "end_turn",
+    "usage": {
+      "input_tokens": 14,
+      "output_tokens": 30,
+      "cached_input_tokens": 0,
+      "reasoning_tokens": 18
+    }
+  }
+}

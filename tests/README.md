@@ -1,8 +1,8 @@
 # Language-agnostic tests
 
 These tests check that every port sends the same vendor requests. Each port
-ships a test server that exposes `ask` over HTTP. The tests start a mock vendor,
-start the port's test server, and ask it questions. The mock vendor records each
+ships a test server that exposes `ask`, `complete` and `stream` over HTTP. The
+tests start a mock vendor, start the port's test server, and call it. The mock vendor records each
 request it receives, and each test compares those requests with its case.
 
 ## Running
@@ -16,14 +16,18 @@ one with `--impl`:
 
 ## Cases
 
-Cases live in `cases/*.json`. Each case names payloads instead of holding them:
+Cases live in `cases/*.json`. Each case has a `name`, the test id, and `steps`,
+which run in order. A step names payloads instead of holding them:
 
 | Key | Meaning |
 |---|---|
-| `name` | The test id. |
-| `ask` | The arguments of `ask`. |
+| `ask`, `complete` or `stream` | The call, and its arguments. |
 | `vendor` | The vendor exchanges expected, in order. Each has a `request` and a `response`. |
 | `reply` | The reply of the test server expected. |
+
+A step can send back the message an earlier step returned. In its arguments,
+`{"$reply_message": N}` stands for the assistant message of step `N`'s reply,
+as the implementation returned it.
 
 Payloads live in `reusable_payloads/<party>/<request or response>/`, one JSON
 file each. A case names a payload by its path, without `.json`. The parties are
@@ -31,16 +35,21 @@ file each. A case names a payload by its path, without `.json`. The parties are
 
 | Payload | Content |
 |---|---|
-| `uni-llm-client/request` | The arguments of `ask`: `model`, `question`, and optionally `web_search`, `effort` and `api_keys`. |
-| `uni-llm-client/response` | `{"answer": "..."}`, or `{"error": {"type": "..."}}`. |
+| `uni-llm-client/request` | The arguments of the call. |
+| `uni-llm-client/response` | The reply of the test server, without error messages. |
 | `<vendor>/request` | A vendor request: `method`, `url`, `headers` and `json`. |
-| `<vendor>/response` | The `status` and `body` the mock vendor serves. |
+| `<vendor>/response` | The `status` and the `body` or the `events` the mock vendor serves. |
 
 A vendor request matches when its `method`, `url` and `json` are equal. Its
-`headers` must be present with these values, and other headers are allowed. An
-error reply matches on its type alone, since messages differ between ports.
-Every case passes the API key `test-key` for each provider, unless its `ask`
-sets `api_keys`.
+`headers` must be present with these values, and other headers are allowed.
+JSON text under an `arguments` key is compared parsed, since ports format it
+differently. An error matches on its type alone, since messages differ between
+ports. Every case passes the API key `test-key` for each provider, unless its
+arguments set `api_keys`.
+
+A vendor response with `events` is a stream of server-sent events. Each event
+has a `data`, a JSON value or text, and an optional `event` name. An event with
+a `comment` is a comment line. A stream that stops early is cut short.
 
 A new behaviour usually needs a new case. Reuse a payload when one fits.
 
@@ -55,12 +64,16 @@ the repository root, and appends `--vendor-url URL`.
 2. The server sends every vendor request to `URL`. Each request keeps its
    method, path, query, headers and body. The `Host` header keeps the vendor's
    host, such as `api.anthropic.com`.
-3. `POST /ask` takes the arguments of `ask` as a JSON object. It calls `ask`
-   with a new client created with the given `api_keys`.
-4. The server replies with status 200 and `{"answer": "..."}`, or
-   `{"error": {"type": "...", "message": "..."}}` when `ask` raises a library
-   error.
-5. Any other failure replies with status 500. Its body helps debugging.
+3. `POST /ask`, `POST /complete` and `POST /stream` take the arguments of the
+   call as a JSON object. Each calls it with a new client created with the
+   given `api_keys`.
+4. The server replies with status 200. A library error replies
+   `{"error": {"type": "...", "message": "..."}}`.
+5. `ask` replies `{"answer": "..."}`. `complete` replies
+   `{"response": RESPONSE}`.
+6. `stream` reads the whole stream and replies `{"events": [EVENT, ...]}`. An
+   error during the stream replies the events received so far, plus `error`.
+7. Any other failure replies with status 500. Its body helps debugging.
 
 The runner removes every environment variable ending in `_API_KEY` before it
 starts a server.
@@ -75,3 +88,19 @@ Error types are the same in every port:
 | `refusal` | The model declines to answer. |
 | `incomplete_response` | The response contains no complete answer. |
 | `provider` | Any other vendor error. |
+
+## JSON form
+
+The arguments and replies of `complete` and `stream` use the names of
+[messages.md](../docs/specs/messages.md) and
+[streaming.md](../docs/specs/streaming.md). Replies hold every field, defaults
+included.
+
+| Value | JSON |
+|---|---|
+| Arguments | `model`, `messages`, and optionally `system`, `tools`, `web_search`, `effort`, `max_tokens` and `api_keys`. |
+| Message | `role`, `content`, a list of blocks, and `vendor`: `{"provider": "...", "content": ...}` or `null`. |
+| Block | `type` and the block's fields. The types are `text`, `reasoning`, `tool_use`, `tool_result`, `server_tool_use` and `server_tool_result`. |
+| Tool | `name`, `description` and `input_schema`. |
+| `RESPONSE` | `message`, `stop_reason`, and `usage` with its four counts. |
+| `EVENT` | `type` and the event's fields. The types are `text_delta`, `reasoning_delta`, `tool_use_start`, `tool_use_delta`, `tool_use_end` with its `block`, and `completed` with its `response`. |

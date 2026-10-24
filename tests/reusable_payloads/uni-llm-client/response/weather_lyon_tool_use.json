@@ -1,0 +1,55 @@
+{
+  "response": {
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Lyon needs a lookup.",
+          "redacted": false
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_t2",
+          "name": "get_weather",
+          "input": {
+            "city": "Lyon"
+          }
+        }
+      ],
+      "vendor": {
+        "provider": "openrouter",
+        "content": {
+          "content": "",
+          "tool_calls": [
+            {
+              "id": "toolu_t2",
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "arguments": "{\"city\":\"Lyon\"}"
+              }
+            }
+          ],
+          "reasoning": "Lyon needs a lookup.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "Lyon needs a lookup.",
+              "signature": "sig_or_t1",
+              "format": "anthropic-claude-v1",
+              "index": 0
+            }
+          ]
+        }
+      }
+    },
+    "stop_reason": "tool_use",
+    "usage": {
+      "input_tokens": 400,
+      "output_tokens": 35,
+      "cached_input_tokens": 300,
+      "reasoning_tokens": 20
+    }
+  }
+}

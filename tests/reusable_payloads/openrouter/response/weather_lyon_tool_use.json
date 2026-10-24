@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "body": {
+    "id": "gen-t1",
+    "model": "anthropic/claude-haiku-4.5",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "tool_calls",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "Lyon needs a lookup.",
+          "reasoning_details": [
+            {
+              "type": "reasoning.text",
+              "text": "Lyon needs a lookup.",
+              "signature": "sig_or_t1",
+              "format": "anthropic-claude-v1",
+              "index": 0
+            }
+          ],
+          "tool_calls": [
+            {
+              "id": "toolu_t2",
+              "type": "function",
+              "function": {
+                "name": "get_weather",
+                "arguments": "{\"city\":\"Lyon\"}"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 400,
+      "completion_tokens": 35,
+      "prompt_tokens_details": {
+        "cached_tokens": 300
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 20
+      }
+    }
+  }
+}

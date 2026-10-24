@@ -1,0 +1,58 @@
+{
+  "model": "openrouter/anthropic/claude-haiku-4.5",
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Current weather in a city.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ]
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "What is the weather in Paris?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_h1",
+          "name": "get_weather",
+          "input": {
+            "city": "Paris"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Here is the weather."
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_h1",
+          "content": "18°C and sunny"
+        }
+      ]
+    }
+  ]
+}

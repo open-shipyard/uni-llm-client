@@ -1,0 +1,11 @@
+{
+  "events": [
+    {
+      "type": "text_delta",
+      "text": "Ly"
+    }
+  ],
+  "error": {
+    "type": "provider"
+  }
+}
