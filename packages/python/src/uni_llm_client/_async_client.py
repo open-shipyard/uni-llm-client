@@ -36,6 +36,9 @@ T = TypeVar("T")
 # How the client waits before a retry; the unit tests replace it.
 _sleep = asyncio.sleep
 
+# The OS's source: unpredictable jitter for the retry backoff, at no real cost.
+_random = random.SystemRandom()
+
 
 class AsyncClient:
     """Asynchronous client with the same API as `Client`.
@@ -188,7 +191,7 @@ class AsyncClient:
                 return accept(response)
             except UniLLMError as error:
                 delay = self._retry.delay(
-                    error, retries, response, now=time.time(), jitter=random.random()
+                    error, retries, response, now=time.time(), jitter=_random.random()
                 )
                 if delay is None:
                     raise
