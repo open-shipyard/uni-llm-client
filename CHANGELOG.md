@@ -13,6 +13,8 @@ and this project adheres to
 - Initial Python project structure.
 - Anthropic and OpenRouter support
 - Retries of failed model calls (`max_retries`), and `TransportError` for connection failures and timeouts
+- Options for the waits before a retry: `initial_retry_delay`, `max_retry_delay`
+  and `max_retry_after`
 - Providers of your own: a gateway or another deployment of a known API,
   under a name of your own, with its own key and base URL; and a `timeout`
   per call.
