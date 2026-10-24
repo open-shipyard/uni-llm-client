@@ -24,6 +24,15 @@ Each port lives in `packages/<language>`. The language-agnostic tests live in
 `tests`, and every port must pass them. A port joins them through its test
 server, described in [tests/README.md](tests/README.md).
 
+CI checks a package only when it changes. A change to `tests` runs the
+language-agnostic tests of every package. A change to the CI workflow runs
+everything. The `ci-ok` job passes when every other job passed or was skipped.
+
+Each package has its own SonarQube Cloud project, set in its
+`sonar-project.properties`. The root project covers `.github` and `tests`.
+Coverage comes from the language-agnostic tests alone. The Python unit tests
+report no coverage.
+
 ## Development setup
 
 The Python port and the language-agnostic tests use

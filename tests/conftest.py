@@ -103,11 +103,20 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         choices=sorted(IMPLEMENTATIONS),
         help="Implementation to test; repeat for several. Default: all.",
     )
+    parser.addoption(
+        "--package",
+        action="append",
+        choices=sorted({spec["package"] for spec in IMPLEMENTATIONS.values()}),
+        help="Test every implementation of a package; repeat for several.",
+    )
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if "implementation" in metafunc.fixturenames:
-        names = metafunc.config.getoption("impl") or sorted(IMPLEMENTATIONS)
+        names = metafunc.config.getoption("impl") or []
+        for package in metafunc.config.getoption("package") or []:
+            names += [n for n, s in IMPLEMENTATIONS.items() if s["package"] == package]
+        names = sorted(set(names)) or sorted(IMPLEMENTATIONS)
         metafunc.parametrize("implementation", names, indirect=True, scope="session")
 
 
