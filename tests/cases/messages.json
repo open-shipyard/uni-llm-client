@@ -1,0 +1,102 @@
+[
+  {
+    "name": "tool-loop-across-providers",
+    "steps": [
+      {
+        "complete": "uni-llm-client/request/weather_paris_ask",
+        "vendor": [
+          {
+            "request": "anthropic/request/weather_paris_ask",
+            "response": "anthropic/response/weather_paris_tool_use"
+          }
+        ],
+        "reply": "uni-llm-client/response/weather_paris_tool_use"
+      },
+      {
+        "complete": "uni-llm-client/request/weather_paris_tool_result",
+        "vendor": [
+          {
+            "request": "anthropic/request/weather_paris_tool_result",
+            "response": "anthropic/response/weather_paris_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/weather_paris_answer"
+      },
+      {
+        "complete": "uni-llm-client/request/weather_lyon_on_openrouter",
+        "vendor": [
+          {
+            "request": "openrouter/request/weather_lyon_from_anthropic",
+            "response": "openrouter/response/weather_lyon_tool_use"
+          }
+        ],
+        "reply": "uni-llm-client/response/weather_lyon_tool_use"
+      },
+      {
+        "complete": "uni-llm-client/request/weather_lyon_tool_result",
+        "vendor": [
+          {
+            "request": "openrouter/request/weather_lyon_tool_result",
+            "response": "openrouter/response/weather_lyon_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/weather_lyon_answer"
+      }
+    ]
+  },
+  {
+    "name": "tool-results-come-before-text",
+    "steps": [
+      {
+        "complete": "uni-llm-client/request/text_before_tool_result",
+        "vendor": [
+          {
+            "request": "anthropic/request/tool_result_before_text",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/anthropic_answer"
+      },
+      {
+        "complete": "uni-llm-client/request/text_before_tool_result_on_openrouter",
+        "vendor": [
+          {
+            "request": "openrouter/request/tool_result_before_text",
+            "response": "openrouter/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/openrouter_answer"
+      }
+    ]
+  },
+  {
+    "name": "max-tokens-is-a-stop-reason",
+    "steps": [
+      {
+        "complete": "uni-llm-client/request/complete_paris_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/complete_paris_question",
+            "response": "anthropic/response/max_tokens"
+          }
+        ],
+        "reply": "uni-llm-client/response/max_tokens"
+      }
+    ]
+  },
+  {
+    "name": "unknown-stop-reason",
+    "steps": [
+      {
+        "complete": "uni-llm-client/request/complete_paris_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/complete_paris_question",
+            "response": "anthropic/response/unknown_stop_reason"
+          }
+        ],
+        "reply": "uni-llm-client/response/provider"
+      }
+    ]
+  }
+]

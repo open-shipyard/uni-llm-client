@@ -1,0 +1,41 @@
+{
+  "method": "POST",
+  "url": "https://openrouter.ai/api/v1/chat/completions",
+  "headers": {
+    "authorization": "Bearer test-key",
+    "content-type": "application/json"
+  },
+  "json": {
+    "model": "anthropic/claude-haiku-4.5",
+    "reasoning": {
+      "effort": "low"
+    },
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Current weather in a city.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "city"
+            ]
+          }
+        }
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the weather in Lyon?"
+      }
+    ],
+    "stream": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "events": [
+    {
+      "type": "text_delta",
+      "text": "Paris"
+    }
+  ],
+  "error": {
+    "type": "incomplete_response"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "events": [
+    {
+      "data": {
+        "id": "gen-e1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
+              "content": "Ly"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-e1",
+        "error": {
+          "code": 502,
+          "message": "Upstream error"
+        }
+      }
+    }
+  ]
+}

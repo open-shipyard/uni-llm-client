@@ -1,0 +1,39 @@
+{
+  "response": {
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "",
+          "redacted": false
+        },
+        {
+          "type": "text",
+          "text": "Paris is the capital of France."
+        }
+      ],
+      "vendor": {
+        "provider": "anthropic",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "sig_01"
+          },
+          {
+            "type": "text",
+            "text": "Paris is the capital of France."
+          }
+        ]
+      }
+    },
+    "stop_reason": "end_turn",
+    "usage": {
+      "input_tokens": 14,
+      "output_tokens": 12,
+      "cached_input_tokens": 0,
+      "reasoning_tokens": 0
+    }
+  }
+}

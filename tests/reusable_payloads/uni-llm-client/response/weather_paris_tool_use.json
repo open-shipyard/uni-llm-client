@@ -1,0 +1,64 @@
+{
+  "response": {
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user wants the weather in Paris.",
+          "redacted": false
+        },
+        {
+          "type": "reasoning",
+          "text": "",
+          "redacted": true
+        },
+        {
+          "type": "text",
+          "text": "Let me check."
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_t1",
+          "name": "get_weather",
+          "input": {
+            "city": "Paris"
+          }
+        }
+      ],
+      "vendor": {
+        "provider": "anthropic",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "The user wants the weather in Paris.",
+            "signature": "sig_t1"
+          },
+          {
+            "type": "redacted_thinking",
+            "data": "enc_t1"
+          },
+          {
+            "type": "text",
+            "text": "Let me check."
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_t1",
+            "name": "get_weather",
+            "input": {
+              "city": "Paris"
+            }
+          }
+        ]
+      }
+    },
+    "stop_reason": "tool_use",
+    "usage": {
+      "input_tokens": 150,
+      "output_tokens": 55,
+      "cached_input_tokens": 100,
+      "reasoning_tokens": 0
+    }
+  }
+}

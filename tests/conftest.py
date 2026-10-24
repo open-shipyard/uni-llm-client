@@ -83,9 +83,14 @@ class MockVendor:
                     response = vendor._responses.pop(0)
                 else:
                     response = {"status": 500, "body": {"error": "no response left"}}
-                reply = json.dumps(response["body"]).encode()
+                if "events" in response:
+                    reply = sse(response["events"])
+                    content_type = "text/event-stream"
+                else:
+                    reply = json.dumps(response["body"]).encode()
+                    content_type = "application/json"
                 self.send_response(response["status"])
-                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(reply)))
                 self.end_headers()
                 self.wfile.write(reply)
@@ -94,6 +99,20 @@ class MockVendor:
                 pass
 
         return Handler
+
+
+def sse(events: list[dict[str, Any]]) -> bytes:
+    """Server-sent events: each has a `data`, an optional `event`, or a `comment`."""
+    frames = []
+    for event in events:
+        if "comment" in event:
+            frames.append(f": {event['comment']}\n\n")
+            continue
+        data = event["data"]
+        text = data if isinstance(data, str) else json.dumps(data)
+        name = f"event: {event['event']}\n" if "event" in event else ""
+        frames.append(f"{name}data: {text}\n\n")
+    return "".join(frames).encode()
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -161,9 +180,10 @@ def implementation(
         process.wait(timeout=10)
 
 
-def ask(server_url: str, args: dict[str, Any]) -> dict[str, Any]:
+def call(server_url: str, name: str, args: dict[str, Any]) -> dict[str, Any]:
+    """POST `args` to the test server's `/name` and return its reply."""
     request = urllib.request.Request(
-        f"{server_url}/ask",
+        f"{server_url}/{name}",
         data=json.dumps(args).encode(),
         headers={"Content-Type": "application/json"},
     )

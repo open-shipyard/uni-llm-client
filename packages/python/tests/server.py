@@ -1,15 +1,17 @@
 # Copyright 2026 The uni-llm-client Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Serves `ask` over HTTP for the language-agnostic tests in the repository root.
+"""Serves the client over HTTP for the language-agnostic tests in the repository root.
 
 Run ``python tests/server.py --vendor-url URL [--client sync|async]``. Every
-vendor request goes to `URL`, keeping its path and ``Host`` header. The protocol
-is in ``tests/README.md`` at the repository root.
+vendor request goes to `URL`, keeping its path and ``Host`` header. The protocol,
+and the JSON form of messages and events, is in ``tests/README.md`` at the
+repository root.
 """
 
 import argparse
 import asyncio
+import dataclasses
 import json
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -21,11 +23,50 @@ from uni_llm_client import (
     AsyncClient,
     AuthenticationError,
     Client,
+    Completed,
+    ContentBlock,
     IncompleteResponseError,
+    Message,
     ProviderError,
     RateLimitError,
+    ReasoningBlock,
+    ReasoningDelta,
     RefusalError,
+    Response,
+    ServerToolResultBlock,
+    ServerToolUseBlock,
+    StreamEvent,
+    TextBlock,
+    TextDelta,
+    Tool,
+    ToolResultBlock,
+    ToolUseBlock,
+    ToolUseDelta,
+    ToolUseEnd,
+    ToolUseStart,
+    VendorContent,
 )
+
+CALLS = ("ask", "complete", "stream")
+
+BLOCK_TYPES: dict[str, type[ContentBlock]] = {
+    "text": TextBlock,
+    "reasoning": ReasoningBlock,
+    "tool_use": ToolUseBlock,
+    "tool_result": ToolResultBlock,
+    "server_tool_use": ServerToolUseBlock,
+    "server_tool_result": ServerToolResultBlock,
+}
+BLOCK_NAMES = {cls: name for name, cls in BLOCK_TYPES.items()}
+
+EVENT_NAMES: dict[type[StreamEvent], str] = {
+    TextDelta: "text_delta",
+    ReasoningDelta: "reasoning_delta",
+    ToolUseStart: "tool_use_start",
+    ToolUseDelta: "tool_use_delta",
+    ToolUseEnd: "tool_use_end",
+    Completed: "completed",
+}
 
 # Most specific first: the subclasses of ProviderError come before it.
 ERROR_TYPES: list[tuple[type[Exception], str]] = [
@@ -64,71 +105,156 @@ class AsyncRedirectTransport(httpx2.AsyncHTTPTransport):
         return await super().handle_async_request(request)
 
 
-def ask_sync(vendor_url: httpx2.URL, args: dict[str, Any]) -> str:
+def message_of(data: dict[str, Any]) -> Message:
+    content = tuple(
+        BLOCK_TYPES[block["type"]](**{k: v for k, v in block.items() if k != "type"})
+        for block in data["content"]
+    )
+    vendor = data.get("vendor")
+    if vendor is not None:
+        return Message(
+            data["role"], content, VendorContent(vendor["provider"], vendor["content"])
+        )
+    return Message(data["role"], content)
+
+
+def block_json(block: ContentBlock) -> dict[str, Any]:
+    return {"type": BLOCK_NAMES[type(block)], **dataclasses.asdict(block)}
+
+
+def message_json(message: Message) -> dict[str, Any]:
+    vendor = message.vendor
+    return {
+        "role": message.role,
+        "content": [block_json(block) for block in message.content],
+        "vendor": vendor and {"provider": vendor.provider, "content": vendor.content},
+    }
+
+
+def response_json(response: Response) -> dict[str, Any]:
+    return {
+        "message": message_json(response.message),
+        "stop_reason": response.stop_reason.value,
+        "usage": dataclasses.asdict(response.usage),
+    }
+
+
+def event_json(event: StreamEvent) -> dict[str, Any]:
+    name = EVENT_NAMES[type(event)]
+    if isinstance(event, Completed):
+        return {"type": name, "response": response_json(event.response)}
+    if isinstance(event, ToolUseEnd):
+        return {"type": name, "block": block_json(event.block)}
+    return {"type": name, **dataclasses.asdict(event)}
+
+
+def ask_kwargs(args: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "model": args["model"],
+        "question": args["question"],
+        "web_search": args.get("web_search", False),
+        "effort": args.get("effort"),
+    }
+
+
+def model_kwargs(args: dict[str, Any]) -> dict[str, Any]:
+    """The arguments of `complete` and `stream`."""
+    return {
+        "model": args["model"],
+        "messages": [message_of(message) for message in args["messages"]],
+        "system": args.get("system"),
+        "tools": [Tool(**tool) for tool in args.get("tools", [])],
+        "web_search": args.get("web_search", False),
+        "effort": args.get("effort"),
+        "max_tokens": args.get("max_tokens"),
+    }
+
+
+def error_reply(error: Exception) -> dict[str, Any]:
+    """The reply for a library error; any other error is re-raised."""
+    for cls, name in ERROR_TYPES:
+        if isinstance(error, cls):
+            return {"error": {"type": name, "message": str(error)}}
+    raise error
+
+
+def call_sync(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
     # trust_env=False: a proxy from the environment would bypass the transport.
     http_client = httpx2.Client(
         transport=RedirectTransport(vendor_url), trust_env=False
     )
     with Client(api_keys=args.get("api_keys"), http_client=http_client) as client:
-        return client.ask(
-            args["model"],
-            args["question"],
-            web_search=args.get("web_search", False),
-            effort=args.get("effort"),
-        )
+        try:
+            if call == "ask":
+                return {"answer": client.ask(**ask_kwargs(args))}
+            if call == "complete":
+                return {
+                    "response": response_json(client.complete(**model_kwargs(args)))
+                }
+        except Exception as error:
+            return error_reply(error)
+        events: list[dict[str, Any]] = []
+        try:
+            for event in client.stream(**model_kwargs(args)):
+                events.append(event_json(event))
+        except Exception as error:
+            return {"events": events, **error_reply(error)}
+        return {"events": events}
 
 
-def ask_async(vendor_url: httpx2.URL, args: dict[str, Any]) -> str:
-    async def run() -> str:
+def call_async(vendor_url: httpx2.URL, call: str, args: dict[str, Any]) -> Any:
+    async def run() -> Any:
         http_client = httpx2.AsyncClient(
             transport=AsyncRedirectTransport(vendor_url), trust_env=False
         )
         async with AsyncClient(
             api_keys=args.get("api_keys"), http_client=http_client
         ) as client:
-            return await client.ask(
-                args["model"],
-                args["question"],
-                web_search=args.get("web_search", False),
-                effort=args.get("effort"),
-            )
+            try:
+                if call == "ask":
+                    return {"answer": await client.ask(**ask_kwargs(args))}
+                if call == "complete":
+                    response = await client.complete(**model_kwargs(args))
+                    return {"response": response_json(response)}
+            except Exception as error:
+                return error_reply(error)
+            events: list[dict[str, Any]] = []
+            try:
+                async for event in client.stream(**model_kwargs(args)):
+                    events.append(event_json(event))
+            except Exception as error:
+                return {"events": events, **error_reply(error)}
+            return {"events": events}
 
     return asyncio.run(run())
 
 
-def error_type(error: Exception) -> str | None:
-    for cls, name in ERROR_TYPES:
-        if isinstance(error, cls):
-            return name
-    return None
-
-
 def make_handler(vendor_url: httpx2.URL, client: str) -> type[BaseHTTPRequestHandler]:
-    ask = ask_sync if client == "sync" else ask_async
+    call_client = call_sync if client == "sync" else call_async
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
-            if self.path != "/ask":
+            call = self.path.removeprefix("/")
+            if call not in CALLS:
                 self.send_error(404)
                 return
             length = int(self.headers.get("Content-Length", 0))
             args = json.loads(self.rfile.read(length))
             status = 200
             try:
-                reply: dict[str, Any] = {"answer": ask(vendor_url, args)}
-            except Exception as error:
-                name = error_type(error)
-                if name is None:
-                    # A bug in this server or the library: show it to the runner.
-                    status, reply = 500, {"traceback": traceback.format_exc()}
-                else:
-                    reply = {"error": {"type": name, "message": str(error)}}
+                reply = call_client(vendor_url, call, args)
+            except Exception:
+                # A bug in this server or the library: show it to the runner.
+                status, reply = 500, {"traceback": traceback.format_exc()}
             body = json.dumps(reply).encode()
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def log_message(self, format: str, *args: Any) -> None:
+            pass
 
     return Handler
 

@@ -1,0 +1,157 @@
+{
+  "status": 200,
+  "events": [
+    {
+      "comment": "OPENROUTER PROCESSING"
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
+              "content": "",
+              "reasoning": "Need weather."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "reasoning_details": [
+                {
+                  "type": "reasoning.text",
+                  "text": "Need ",
+                  "index": 0,
+                  "format": "anthropic-claude-v1"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "reasoning_details": [
+                {
+                  "type": "reasoning.text",
+                  "text": "weather.",
+                  "signature": "sig_or1",
+                  "index": 0
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "id": "call_1",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": ""
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "function": {
+                    "arguments": "{\"city\":"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "tool_calls": [
+                {
+                  "index": 0,
+                  "function": {
+                    "arguments": "\"Lyon\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {},
+            "finish_reason": "tool_calls"
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-s1",
+        "choices": [],
+        "usage": {
+          "prompt_tokens": 120,
+          "completion_tokens": 30,
+          "prompt_tokens_details": {
+            "cached_tokens": 100
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 12
+          }
+        }
+      }
+    },
+    {
+      "data": "[DONE]"
+    }
+  ]
+}

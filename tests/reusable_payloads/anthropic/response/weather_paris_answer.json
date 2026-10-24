@@ -1,0 +1,51 @@
+{
+  "status": 200,
+  "body": {
+    "id": "msg_t2",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-opus-5",
+    "content": [
+      {
+        "type": "server_tool_use",
+        "id": "srvtoolu_t1",
+        "name": "web_search",
+        "input": {
+          "query": "Paris weather tonight"
+        }
+      },
+      {
+        "type": "web_search_tool_result",
+        "tool_use_id": "srvtoolu_t1",
+        "content": [
+          {
+            "type": "web_search_result",
+            "url": "https://example.com/paris",
+            "title": "Paris weather",
+            "encrypted_content": "enc_w1",
+            "page_age": null
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "text": "It is 18°C and sunny in Paris, and it stays clear tonight.",
+        "citations": [
+          {
+            "type": "web_search_result_location",
+            "url": "https://example.com/paris",
+            "title": "Paris weather",
+            "encrypted_index": "idx_1",
+            "cited_text": "Clear tonight."
+          }
+        ]
+      }
+    ],
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "usage": {
+      "input_tokens": 300,
+      "output_tokens": 60
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "body": {
+    "id": "msg_t1",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-opus-5",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "The user wants the weather in Paris.",
+        "signature": "sig_t1"
+      },
+      {
+        "type": "redacted_thinking",
+        "data": "enc_t1"
+      },
+      {
+        "type": "text",
+        "text": "Let me check."
+      },
+      {
+        "type": "tool_use",
+        "id": "toolu_t1",
+        "name": "get_weather",
+        "input": {
+          "city": "Paris"
+        }
+      }
+    ],
+    "stop_reason": "tool_use",
+    "stop_sequence": null,
+    "usage": {
+      "input_tokens": 40,
+      "cache_creation_input_tokens": 10,
+      "cache_read_input_tokens": 100,
+      "output_tokens": 55
+    }
+  }
+}

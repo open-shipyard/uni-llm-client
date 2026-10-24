@@ -1,0 +1,89 @@
+{
+  "events": [
+    {
+      "type": "reasoning_delta",
+      "text": "Need weather."
+    },
+    {
+      "type": "tool_use_start",
+      "id": "call_1",
+      "name": "get_weather"
+    },
+    {
+      "type": "tool_use_delta",
+      "id": "call_1",
+      "partial_json": "{\"city\":"
+    },
+    {
+      "type": "tool_use_delta",
+      "id": "call_1",
+      "partial_json": "\"Lyon\"}"
+    },
+    {
+      "type": "tool_use_end",
+      "block": {
+        "type": "tool_use",
+        "id": "call_1",
+        "name": "get_weather",
+        "input": {
+          "city": "Lyon"
+        }
+      }
+    },
+    {
+      "type": "completed",
+      "response": {
+        "message": {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "reasoning",
+              "text": "Need weather.",
+              "redacted": false
+            },
+            {
+              "type": "tool_use",
+              "id": "call_1",
+              "name": "get_weather",
+              "input": {
+                "city": "Lyon"
+              }
+            }
+          ],
+          "vendor": {
+            "provider": "openrouter",
+            "content": {
+              "tool_calls": [
+                {
+                  "id": "call_1",
+                  "type": "function",
+                  "function": {
+                    "name": "get_weather",
+                    "arguments": "{\"city\":\"Lyon\"}"
+                  }
+                }
+              ],
+              "reasoning": "Need weather.",
+              "reasoning_details": [
+                {
+                  "type": "reasoning.text",
+                  "text": "Need weather.",
+                  "index": 0,
+                  "format": "anthropic-claude-v1",
+                  "signature": "sig_or1"
+                }
+              ]
+            }
+          }
+        },
+        "stop_reason": "tool_use",
+        "usage": {
+          "input_tokens": 120,
+          "output_tokens": 30,
+          "cached_input_tokens": 100,
+          "reasoning_tokens": 12
+        }
+      }
+    }
+  ]
+}

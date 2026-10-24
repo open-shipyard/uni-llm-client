@@ -46,7 +46,8 @@ class Effort(StrEnum):
 ## Non-goals
 
 - Turning reasoning off.
-- Returning reasoning content.
+- Returning reasoning content from `ask`. `complete` and `stream` return
+  it ([messages.md](messages.md), [streaming.md](streaming.md)).
 
 ## Open questions
 
