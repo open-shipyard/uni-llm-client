@@ -12,9 +12,9 @@ pushes to `main` are blocked.
        git switch -c feature/short-description
 
 2. Open a pull request against `main`.
-3. Once checks pass and review is complete, a maintainer merges it.
+3. A maintainer merges it once checks pass and review is complete.
 
-Releases are cut by maintainers by tagging a commit on `main` with a
+Maintainers cut releases by tagging a commit on `main` with a
 [Semantic Versioning](https://semver.org/) tag such as `v0.2.0`. Fixes for a
 release go through a regular pull request to `main` and ship in the next tag.
 
@@ -30,13 +30,21 @@ everything. The `ci-ok` job passes when every other job passed or was skipped.
 
 Each package has its own SonarQube Cloud project, set in its
 `sonar-project.properties`. The root project covers `.github` and `tests`.
-Coverage comes from the language-agnostic tests alone. The Python unit tests
-report no coverage.
+
+## Coverage
+
+Coverage comes from the HTTP tests in [`tests`](tests/README.md) alone. Each
+port runs its test server under its coverage tool while the HTTP tests drive
+it. Unit tests report no coverage, in every port. Each package sends one report
+to its SonarQube Cloud project.
+
+The commands for each port are in its own CONTRIBUTING.md, such as
+[packages/python/CONTRIBUTING.md](packages/python/CONTRIBUTING.md).
 
 ## Development setup
 
-The Python port and the language-agnostic tests use
-[uv](https://docs.astral.sh/uv/). Run the same checks as CI before opening a
+The Python port uses [uv](https://docs.astral.sh/uv/), and so do the
+language-agnostic tests. Run the same checks as CI before opening a
 pull request, in `packages/python` and in `tests`:
 
     uv sync
@@ -72,6 +80,5 @@ which appends:
     Signed-off-by: Jane Doe <jane@example.com>
 
 Use your real name and a reachable email address. Sign-off is a statement about
-the provenance of your contribution, so pseudonymous sign-offs cannot be
-accepted. If you are contributing on behalf of an employer, make sure you have
-their authorization.
+the provenance of your contribution. Pseudonymous sign-offs are not accepted. A
+contribution on behalf of an employer needs the employer's authorization.
