@@ -16,23 +16,33 @@ one with `--impl`:
 
 ## Cases
 
-Cases are data, in `cases/*.json`. Each case is an object:
+Cases live in `cases/*.json`. Each case names payloads instead of holding them:
 
 | Key | Meaning |
 |---|---|
 | `name` | The test id. |
-| `ask` | The arguments of `ask`: `model`, `question`, and optionally `web_search`, `effort` and `api_keys`. |
-| `responses` | Optional. A file in `vendor_responses/`, without `.json`: the responses the mock vendor serves, in order. |
-| `requests` | The vendor requests expected, in order. Each has `method`, `url`, `headers` and `json`. |
-| `answer` | The answer expected. |
-| `error` | The error type expected, instead of `answer`. |
+| `ask` | The arguments of `ask`. |
+| `vendor` | The vendor exchanges expected, in order. Each has a `request` and a `response`. |
+| `reply` | The reply of the test server expected. |
 
-The `json` of a request must match exactly. Its `headers` must be present with
-these values, and other headers are allowed. Every case passes the API key
-`test-key` for each provider, unless it sets `api_keys`.
+Payloads live in `reusable_payloads/<party>/<request or response>/`, one JSON
+file each. A case names a payload by its path, without `.json`. The parties are
+`uni-llm-client` and one directory per vendor.
 
-A new behaviour usually needs a new case. A new vendor needs its responses in
-`vendor_responses/<provider>/`.
+| Payload | Content |
+|---|---|
+| `uni-llm-client/request` | The arguments of `ask`: `model`, `question`, and optionally `web_search`, `effort` and `api_keys`. |
+| `uni-llm-client/response` | `{"answer": "..."}`, or `{"error": {"type": "..."}}`. |
+| `<vendor>/request` | A vendor request: `method`, `url`, `headers` and `json`. |
+| `<vendor>/response` | The `status` and `body` the mock vendor serves. |
+
+A vendor request matches when its `method`, `url` and `json` are equal. Its
+`headers` must be present with these values, and other headers are allowed. An
+error reply matches on its type alone, since messages differ between ports.
+Every case passes the API key `test-key` for each provider, unless its `ask`
+sets `api_keys`.
+
+A new behaviour usually needs a new case. Reuse a payload when one fits.
 
 ## Test server protocol
 

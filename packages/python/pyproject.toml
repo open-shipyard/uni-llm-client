@@ -36,6 +36,7 @@ Changelog = "https://github.com/open-shipyard/uni-llm-client/blob/main/CHANGELOG
 
 [dependency-groups]
 dev = [
+    "coverage>=7.16",
     "mypy>=2",
     "pytest>=9",
     "ruff>=0.16",
@@ -58,6 +59,14 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
 [tool.mypy]
 strict = true
 files = ["src", "tests"]
+
+# Coverage is measured on the test server, during the language-agnostic tests.
+[tool.coverage.run]
+source = ["uni_llm_client"]
+relative_files = true
+parallel = true
+# The runner stops each server with SIGTERM.
+sigterm = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

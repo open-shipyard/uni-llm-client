@@ -1,0 +1,23 @@
+{
+  "method": "POST",
+  "url": "https://api.anthropic.com/v1/messages",
+  "headers": {
+    "x-api-key": "test-key",
+    "anthropic-version": "2023-06-01",
+    "content-type": "application/json"
+  },
+  "json": {
+    "model": "claude-haiku-4-5",
+    "max_tokens": 64000,
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the capital of France?"
+      }
+    ],
+    "thinking": {
+      "type": "enabled",
+      "budget_tokens": 48000
+    }
+  }
+}

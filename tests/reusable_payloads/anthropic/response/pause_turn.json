@@ -1,0 +1,29 @@
+{
+  "status": 200,
+  "body": {
+    "id": "msg_01",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-opus-5",
+    "content": [
+      {
+        "type": "text",
+        "text": "I'll search for that."
+      },
+      {
+        "type": "server_tool_use",
+        "id": "srvtoolu_01",
+        "name": "web_search",
+        "input": {
+          "query": "capital of France"
+        }
+      }
+    ],
+    "stop_reason": "pause_turn",
+    "stop_sequence": null,
+    "usage": {
+      "input_tokens": 2100,
+      "output_tokens": 20
+    }
+  }
+}

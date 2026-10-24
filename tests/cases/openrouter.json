@@ -1,38 +1,24 @@
 [
   {
     "name": "openrouter-question",
-    "ask": {"model": "openrouter/anthropic/claude-haiku-4.5", "question": "What is the capital of France?"},
-    "responses": "openrouter/answer",
-    "requests": [
+    "ask": "uni-llm-client/request/openrouter_haiku_4_5_question",
+    "vendor": [
       {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": {"authorization": "Bearer test-key", "content-type": "application/json"},
-        "json": {
-          "model": "anthropic/claude-haiku-4.5",
-          "messages": [{"role": "user", "content": "What is the capital of France?"}]
-        }
+        "request": "openrouter/request/haiku_4_5_question",
+        "response": "openrouter/response/answer"
       }
     ],
-    "answer": "Paris is the capital of France."
+    "reply": "uni-llm-client/response/answer"
   },
   {
     "name": "openrouter-effort-and-web-search",
-    "ask": {"model": "openrouter/anthropic/claude-haiku-4.5", "question": "What is the capital of France?", "effort": "medium", "web_search": true},
-    "responses": "openrouter/answer",
-    "requests": [
+    "ask": "uni-llm-client/request/openrouter_haiku_4_5_medium_effort_web_search",
+    "vendor": [
       {
-        "method": "POST",
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": {"authorization": "Bearer test-key"},
-        "json": {
-          "model": "anthropic/claude-haiku-4.5",
-          "messages": [{"role": "user", "content": "What is the capital of France?"}],
-          "reasoning": {"effort": "medium"},
-          "tools": [{"type": "openrouter:web_search"}]
-        }
+        "request": "openrouter/request/haiku_4_5_medium_effort_web_search",
+        "response": "openrouter/response/answer"
       }
     ],
-    "answer": "Paris is the capital of France."
+    "reply": "uni-llm-client/response/answer"
   }
 ]

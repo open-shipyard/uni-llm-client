@@ -1,10 +1,12 @@
 {
   "python-sync": {
+    "package": "python",
     "cwd": "packages/python",
-    "command": ["uv", "run", "--locked", "python", "tests/server.py", "--client", "sync"]
+    "command": ["uv", "run", "--locked", "--no-build", "coverage", "run", "tests/server.py", "--client", "sync"]
   },
   "python-async": {
+    "package": "python",
     "cwd": "packages/python",
-    "command": ["uv", "run", "--locked", "python", "tests/server.py", "--client", "async"]
+    "command": ["uv", "run", "--locked", "--no-build", "coverage", "run", "tests/server.py", "--client", "async"]
   }
 }

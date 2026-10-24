@@ -8,8 +8,45 @@ on:
 permissions:
   contents: read
 
+# Each package runs its checks, HTTP tests and Sonar scan only when it changes.
+# A change to the shared tests runs the HTTP tests of every package. A change to
+# this workflow runs everything.
 jobs:
-  lint:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      python: ${{ steps.filter.outputs.python == 'true' || steps.filter.outputs.ci == 'true' }}
+      python-http: ${{ steps.filter.outputs.python == 'true' || steps.filter.outputs.shared == 'true' || steps.filter.outputs.ci == 'true' }}
+      typescript: ${{ steps.filter.outputs.typescript == 'true' || steps.filter.outputs.ci == 'true' }}
+      shared: ${{ steps.filter.outputs.shared == 'true' || steps.filter.outputs.ci == 'true' }}
+      root: ${{ steps.filter.outputs.root == 'true' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            ci:
+              - .github/workflows/ci.yml
+            shared:
+              - tests/**
+            python:
+              - packages/python/**
+            typescript:
+              - packages/typescript/**
+            root:
+              - .github/**
+              - tests/**
+              - sonar-project.properties
+
+  python-lint:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -18,15 +55,17 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v4
-      - run: uv sync --locked
-      - run: uv run ruff check
-      - run: uv run ruff format --check
-      - run: uv run mypy
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv sync --locked --no-build
+      - run: uv run --locked --no-build ruff check
+      - run: uv run --locked --no-build ruff format --check
+      - run: uv run --locked --no-build mypy
       # The package ships copies of the root license files.
       - run: for f in LICENSE NOTICE AUTHORS; do cmp "$f" "../../$f"; done
 
-  test:
+  python-test:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,13 +78,15 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv sync --locked
-      - run: uv run pytest
+      - run: uv sync --locked --no-build
+      - run: uv run --locked --no-build pytest
 
-  build:
+  python-build:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -55,11 +96,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - run: uv build
 
-  # The language-agnostic tests, against every implementation.
-  contract:
+  # The language-agnostic tests against the Python test servers. Their coverage
+  # is the only coverage reported for the package.
+  python-http:
+    needs: changes
+    if: needs.changes.outputs.python-http == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -68,14 +112,38 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v4
-      - run: uv sync --locked
-      - run: uv run ruff check
-      - run: uv run ruff format --check
-      - run: uv run mypy
-      - run: uv run pytest
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv sync --locked --no-build
+      - run: uv run --locked --no-build pytest --package python
+      - working-directory: packages/python
+        run: |
+          uv run --locked --no-build coverage combine
+          uv run --locked --no-build coverage xml
+      - uses: actions/upload-artifact@v7
+        with:
+          name: python-coverage
+          path: packages/python/coverage.xml
+
+  shared-lint:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv sync --locked --no-build
+      - run: uv run --locked --no-build ruff check
+      - run: uv run --locked --no-build ruff format --check
+      - run: uv run --locked --no-build mypy
 
   typescript:
+    needs: changes
+    if: needs.changes.outputs.typescript == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -87,5 +155,80 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run typecheck
+
+  # One Sonar project per package, plus one for the workflows and shared tests.
+  # Pull requests from forks get no secrets, so they skip the scans.
+  sonar-python:
+    needs: [changes, python-http]
+    if: >-
+      needs.changes.outputs.python == 'true' && (github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Sonar reads the history to find new code.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: python-coverage
+          path: packages/python
+      - uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        with:
+          projectBaseDir: packages/python
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  sonar-typescript:
+    needs: changes
+    if: >-
+      needs.changes.outputs.typescript == 'true' && (github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        with:
+          projectBaseDir: packages/typescript
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  sonar-root:
+    needs: changes
+    if: >-
+      needs.changes.outputs.root == 'true' && (github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # The one check to require: it passes when every job passed or was skipped.
+  ci-ok:
+    if: always()
+    needs:
+      - changes
+      - python-lint
+      - python-test
+      - python-build
+      - python-http
+      - shared-lint
+      - typescript
+      - sonar-python
+      - sonar-typescript
+      - sonar-root
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
