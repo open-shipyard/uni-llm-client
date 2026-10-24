@@ -69,7 +69,7 @@ with Client() as client:
 ```
 
 `complete` takes the same arguments and returns the `Response` whole. The
-asynchronous `AsyncClient` has the same methods; close its streams with
+asynchronous `AsyncClient` has the same methods. Its streams close with
 `contextlib.aclosing`.
 
 ## Contributing
