@@ -1,24 +1,16 @@
 # Copyright 2026 The uni-llm-client Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""The retry policy's pure functions: which errors are retried, and how long the
-clients wait. The HTTP tests cover the retries themselves."""
+"""How long the clients wait before a retry. The HTTP tests cover which errors
+are retried, and the retries themselves."""
 
 from email.utils import formatdate
 
 import httpx2
 import pytest
 
-from uni_llm_client import (
-    AuthenticationError,
-    IncompleteResponseError,
-    ProviderError,
-    RateLimitError,
-    RefusalError,
-    TransportError,
-    UniLLMError,
-)
-from uni_llm_client._retry import RetryPolicy, backoff, is_retryable, retry_after
+from uni_llm_client import RateLimitError
+from uni_llm_client._retry import RetryPolicy, backoff, retry_after
 
 NOW = 1_800_000_000.0  # Fri, 15 Jan 2027 08:00:00 GMT
 RATE_LIMITED = RateLimitError("Rate limit exceeded", status_code=429)
@@ -29,33 +21,6 @@ def delay(headers: dict[str, str]) -> float | None:
     response has `headers`; without jitter, so that a backoff is 1 s."""
     response = httpx2.Response(429, headers=headers)
     return RetryPolicy().delay(RATE_LIMITED, 1, response, now=NOW, jitter=0)
-
-
-@pytest.mark.parametrize(
-    ("error", "retryable"),
-    [
-        pytest.param(RATE_LIMITED, True, id="429"),
-        pytest.param(ProviderError("", status_code=408), True, id="408"),
-        pytest.param(ProviderError("", status_code=409), True, id="409"),
-        pytest.param(ProviderError("", status_code=500), True, id="500"),
-        pytest.param(ProviderError("", status_code=502), True, id="502"),
-        pytest.param(ProviderError("", status_code=503), True, id="503"),
-        pytest.param(ProviderError("", status_code=529), True, id="529"),
-        pytest.param(TransportError("Connection refused"), True, id="transport"),
-        pytest.param(ProviderError("", status_code=400), False, id="400"),
-        pytest.param(ProviderError("", status_code=404), False, id="404"),
-        pytest.param(ProviderError("", status_code=413), False, id="413"),
-        pytest.param(AuthenticationError("", status_code=401), False, id="401"),
-        pytest.param(AuthenticationError("", status_code=403), False, id="403"),
-        pytest.param(ProviderError("Unknown stop reason"), False, id="no-status"),
-        pytest.param(RefusalError("Declined"), False, id="refusal"),
-        pytest.param(IncompleteResponseError("Cut"), False, id="incomplete"),
-    ],
-)
-def test_retries_only_what_may_pass_on_another_attempt(
-    error: UniLLMError, retryable: bool
-) -> None:
-    assert is_retryable(error) is retryable
 
 
 @pytest.mark.parametrize(
