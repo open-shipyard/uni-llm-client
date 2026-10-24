@@ -1,0 +1,5 @@
+{
+  "model": "anthropic/claude-haiku-4-5",
+  "question": "What is the capital of France?",
+  "effort": "low"
+}

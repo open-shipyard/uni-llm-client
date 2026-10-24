@@ -10,12 +10,17 @@ import pytest
 from conftest import MockVendor, VendorCall, ask
 
 HERE = Path(__file__).parent
+PAYLOADS = HERE / "reusable_payloads"
 API_KEYS = {"anthropic": "test-key", "openrouter": "test-key"}
 CASES = [
     case
     for path in sorted((HERE / "cases").glob("*.json"))
     for case in json.loads(path.read_text())
 ]
+
+
+def payload(name: str) -> Any:
+    return json.loads((PAYLOADS / f"{name}.json").read_text())
 
 
 def sent(call: VendorCall, expected: dict[str, Any] | None) -> dict[str, Any]:
@@ -33,18 +38,19 @@ def sent(call: VendorCall, expected: dict[str, Any] | None) -> dict[str, Any]:
 def test_sends_the_expected_vendor_requests(
     implementation: str, vendor: MockVendor, case: dict[str, Any]
 ) -> None:
-    if "responses" in case:
-        path = HERE / "vendor_responses" / f"{case['responses']}.json"
-        vendor.serve(json.loads(path.read_text()))
+    vendor.serve([payload(exchange["response"]) for exchange in case["vendor"]])
 
-    reply = ask(implementation, {"api_keys": API_KEYS, **case["ask"]})
+    reply = ask(implementation, {"api_keys": API_KEYS, **payload(case["ask"])})
 
-    expected = case["requests"]
+    expected = [payload(exchange["request"]) for exchange in case["vendor"]]
     # Extra calls are compared whole; missing ones show as a shorter list.
     padded = expected + [None] * (len(vendor.calls) - len(expected))
     calls = [sent(c, e) for c, e in zip(vendor.calls, padded, strict=False)]
     assert calls == expected
-    if "error" in case:
-        assert reply.get("error", {}).get("type") == case["error"], reply
+    expected_reply = payload(case["reply"])
+    if "error" in expected_reply:
+        # Error messages differ between ports; only the type is shared.
+        error_type = reply.get("error", {}).get("type")
+        assert error_type == expected_reply["error"]["type"], reply
     else:
-        assert reply == {"answer": case["answer"]}
+        assert reply == expected_reply

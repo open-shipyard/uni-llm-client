@@ -1,0 +1,6 @@
+{
+  "model": "anthropic/claude-future-9",
+  "question": "What is the capital of France?",
+  "effort": "high",
+  "web_search": true
+}
