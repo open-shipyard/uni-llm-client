@@ -8,6 +8,7 @@ gives it. Each implementation's test server sends its vendor requests there. Wit
 ``--live openrouter``, it forwards them to OpenRouter instead, with the real key.
 """
 
+import contextlib
 import json
 import os
 import re
@@ -104,7 +105,12 @@ class MockVendor:
                     if status >= 400:
                         recorded.error_body = reply.decode(errors="replace")
                 else:
-                    status, content_type, reply, extra_headers = vendor.mocked()
+                    mocked = vendor.mocked()
+                    if mocked is None:
+                        # Close the connection without a response, as a network fault.
+                        self.close_connection = True
+                        return
+                    status, content_type, reply, extra_headers = mocked
                 recorded.status = status
                 self.send_response(status)
                 self.send_header("Content-Type", content_type)
@@ -112,24 +118,34 @@ class MockVendor:
                 for name, value in extra_headers.items():
                     self.send_header(name, value)
                 self.end_headers()
-                self.wfile.write(reply)
+                # The client may have given up, as a timeout makes it do.
+                with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+                    self.wfile.write(reply)
 
             def log_message(self, format: str, *args: Any) -> None:
                 pass
 
         return Handler
 
-    def mocked(self) -> tuple[int, str, bytes, dict[str, str]]:
+    def mocked(self) -> tuple[int, str, bytes, dict[str, str]] | None:
         """The next response to serve: its status, content type, body and extra
-        headers."""
+        headers; or None for a response that drops the connection."""
         if self._responses:
             response = self._responses.pop(0)
         else:
             response = {"status": 500, "body": {"error": "no response left"}}
+        if response.get("disconnect"):
+            return None
+        # A slow vendor: the answer comes after `delay` seconds.
+        time.sleep(response.get("delay", 0))
         headers: dict[str, str] = response.get("headers", {})
         if "events" in response:
-            events = sse(response["events"])
-            return response["status"], "text/event-stream", events, headers
+            return (
+                response["status"],
+                "text/event-stream",
+                sse(response["events"]),
+                headers,
+            )
         body = json.dumps(response["body"]).encode()
         return response["status"], "application/json", body, headers
 

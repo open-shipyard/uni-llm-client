@@ -1,0 +1,64 @@
+{
+  "status": 200,
+  "events": [
+    {
+      "data": {
+        "id": "gen-p1",
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
+              "content": "Paris is"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-p1",
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant",
+              "content": " the capital of France."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-p1",
+        "model": "openai/gpt-oss-20b",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "role": "assistant"
+            },
+            "finish_reason": "stop"
+          }
+        ]
+      }
+    },
+    {
+      "data": {
+        "id": "gen-p1",
+        "model": "openai/gpt-oss-20b",
+        "choices": [],
+        "usage": {
+          "prompt_tokens": 14,
+          "completion_tokens": 8
+        }
+      }
+    },
+    {
+      "data": "[DONE]"
+    }
+  ]
+}

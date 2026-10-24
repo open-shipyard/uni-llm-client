@@ -161,5 +161,20 @@
         "reply": "uni-llm-client/response/provider"
       }
     ]
+  },
+  {
+    "name": "openrouter-streamed-answer",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_openrouter_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_question",
+            "response": "openrouter/response/stream_answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_openrouter_answer"
+      }
+    ]
   }
 ]

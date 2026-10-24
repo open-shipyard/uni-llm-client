@@ -1,0 +1,97 @@
+[
+  {
+    "name": "retry-rate-limit-then-unavailable",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/openrouter_gpt_oss_20b_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/rate_limit"
+          },
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/unavailable"
+          },
+          {
+            "request": "openrouter/request/gpt_oss_20b_question",
+            "response": "openrouter/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
+      }
+    ]
+  },
+  {
+    "name": "retries-spent-raise-the-last-error",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/rate_limit"
+          },
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/rate_limit"
+          },
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/overloaded"
+          }
+        ],
+        "reply": "uni-llm-client/response/provider"
+      }
+    ]
+  },
+  {
+    "name": "connection-lost-then-answer",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/opus_5_question",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/disconnect"
+          },
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/answer"
+          }
+        ],
+        "reply": "uni-llm-client/response/answer"
+      }
+    ]
+  },
+  {
+    "name": "connection-lost-without-retries",
+    "steps": [
+      {
+        "ask": "uni-llm-client/request/opus_5_question_without_retries",
+        "vendor": [
+          {
+            "request": "anthropic/request/opus_5_question",
+            "response": "anthropic/response/disconnect"
+          }
+        ],
+        "reply": "uni-llm-client/response/transport"
+      }
+    ]
+  },
+  {
+    "name": "stream-accepted-is-not-retried",
+    "steps": [
+      {
+        "stream": "uni-llm-client/request/stream_openrouter_question",
+        "vendor": [
+          {
+            "request": "openrouter/request/stream_question",
+            "response": "openrouter/response/stream_rate_limited"
+          }
+        ],
+        "reply": "uni-llm-client/response/stream_rate_limit"
+      }
+    ]
+  }
+]
