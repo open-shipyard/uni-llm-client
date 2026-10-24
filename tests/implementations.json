@@ -1,0 +1,10 @@
+{
+  "python-sync": {
+    "cwd": "packages/python",
+    "command": ["uv", "run", "--locked", "python", "tests/server.py", "--client", "sync"]
+  },
+  "python-async": {
+    "cwd": "packages/python",
+    "command": ["uv", "run", "--locked", "python", "tests/server.py", "--client", "async"]
+  }
+}

@@ -14,6 +14,9 @@ and this project adheres to
 
 ### Changed
 
+- The Python package moved to `packages/python`, next to a new TypeScript port
+  in `packages/typescript`. Language-agnostic tests in `tests` check the vendor
+  requests of every port.
 - The HTTP layer uses `httpx2` instead of `httpx`. An `http_client` passed to
   a client must be an `httpx2.Client` or `httpx2.AsyncClient`.
 

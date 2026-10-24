@@ -1,0 +1,20 @@
+[
+  {
+    "name": "invalid-effort",
+    "ask": {"model": "anthropic/claude-opus-5", "question": "What is the capital of France?", "effort": "extreme"},
+    "requests": [],
+    "error": "invalid_argument"
+  },
+  {
+    "name": "unknown-provider",
+    "ask": {"model": "nope/some-model", "question": "What is the capital of France?"},
+    "requests": [],
+    "error": "invalid_argument"
+  },
+  {
+    "name": "missing-api-key",
+    "ask": {"model": "anthropic/claude-opus-5", "question": "What is the capital of France?", "api_keys": {}},
+    "requests": [],
+    "error": "authentication"
+  }
+]

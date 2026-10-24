@@ -14,6 +14,7 @@ dist/
 
 # Environments and secrets (API keys)
 .venv/
+node_modules/
 .env
 .env.*
 !.env.example

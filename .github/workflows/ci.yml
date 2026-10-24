@@ -11,6 +11,9 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python
     steps:
       - uses: actions/checkout@v7
         with:
@@ -20,9 +23,14 @@ jobs:
       - run: uv run ruff check
       - run: uv run ruff format --check
       - run: uv run mypy
+      # The package ships copies of the root license files.
+      - run: for f in LICENSE NOTICE AUTHORS; do cmp "$f" "../../$f"; done
 
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +47,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/python
     steps:
       - uses: actions/checkout@v7
         with:
@@ -47,3 +58,34 @@ jobs:
       - uses: astral-sh/setup-uv@v4
       - run: uv build
 
+  # The language-agnostic tests, against every implementation.
+  contract:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --locked
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run mypy
+      - run: uv run pytest
+
+  typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/typescript
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run typecheck

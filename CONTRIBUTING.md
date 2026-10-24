@@ -18,24 +18,37 @@ Releases are cut by maintainers by tagging a commit on `main` with a
 [Semantic Versioning](https://semver.org/) tag such as `v0.2.0`. Fixes for a
 release go through a regular pull request to `main` and ship in the next tag.
 
+## Repository layout
+
+Each port lives in `packages/<language>`. The language-agnostic tests live in
+`tests`, and every port must pass them. A port joins them through its test
+server, described in [tests/README.md](tests/README.md).
+
 ## Development setup
 
-The project uses [uv](https://docs.astral.sh/uv/). Install the package and its
-development tools into `.venv`:
+The Python port and the language-agnostic tests use
+[uv](https://docs.astral.sh/uv/). Run the same checks as CI before opening a
+pull request, in `packages/python` and in `tests`:
 
     uv sync
-
-Run the same checks as CI before opening a pull request:
-
     uv run ruff check
     uv run ruff format --check
     uv run mypy
     uv run pytest
 
+The TypeScript port uses npm. Installs are `npm ci`, never `npm install`:
+
+    cd packages/typescript
+    npm ci
+    npm run typecheck
+
 New source files start with the license header:
 
     # Copyright 2026 The uni-llm-client Authors
     # SPDX-License-Identifier: Apache-2.0
+
+The Python package ships copies of `LICENSE`, `NOTICE` and `AUTHORS`. Edit the
+files at the root, then copy them to `packages/python`.
 
 ## Developer Certificate of Origin
 

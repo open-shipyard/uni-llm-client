@@ -1,95 +1,166 @@
 # Copyright 2026 The uni-llm-client Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Fixtures that run each test for every model in MODELS, sync and async.
+"""Runs every case against every implementation listed in implementations.json.
 
-Tests only use the public API. Vendor-specific data lives in
-``fixtures/<provider>/<scenario>.json``: the responses a vendor returns for a
-scenario, served in order. Tests are skipped for vendors without that scenario.
+The mock vendor records each request it receives and serves the responses a case
+gives it. Each implementation's test server sends its vendor requests there.
 """
 
-import asyncio
 import json
-from collections.abc import Callable, Mapping
+import os
+import re
+import select
+import subprocess
+import threading
+import urllib.request
+from collections.abc import Iterator
+from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-import httpx2
 import pytest
 
-from uni_llm_client import AsyncClient, Client
-from uni_llm_client._registry import PROVIDERS
+HERE = Path(__file__).parent
+REPO = HERE.parent
+IMPLEMENTATIONS: dict[str, dict[str, Any]] = json.loads(
+    (HERE / "implementations.json").read_text()
+)
+STARTUP_TIMEOUT = 120.0  # The first `uv run` may install the environment.
 
-MODELS = [
-    "anthropic/claude-opus-5",
-    "anthropic/claude-haiku-4-5",
-    "openrouter/anthropic/claude-haiku-4.5",
-]
-
-FIXTURES = Path(__file__).parent / "fixtures"
-TEST_API_KEYS = {name: "test-key" for name in PROVIDERS}
-
-Ask = Callable[..., str]
+# Calls to 127.0.0.1 must not go through a proxy from the environment.
+_opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
-class FakeVendor:
-    """Serves recorded vendor responses and records the requests it receives."""
+@dataclass
+class VendorCall:
+    method: str
+    url: str
+    headers: dict[str, str]
+    json: Any
+
+
+class MockVendor:
+    """Records the requests it receives and serves the responses it is given."""
 
     def __init__(self) -> None:
-        self.requests: list[httpx2.Request] = []
+        self.calls: list[VendorCall] = []
         self._responses: list[dict[str, Any]] = []
+        self._server = ThreadingHTTPServer(("127.0.0.1", 0), self._handler())
+        threading.Thread(target=self._server.serve_forever, daemon=True).start()
 
-    def serve(self, model: str, scenario: str) -> None:
-        provider = model.partition("/")[0]
-        path = FIXTURES / provider / f"{scenario}.json"
-        if not path.exists():
-            pytest.skip(f"{provider} has no {scenario!r} scenario")
-        self._responses = json.loads(path.read_text())
+    @property
+    def url(self) -> str:
+        host, port = self._server.server_address[:2]
+        return f"http://{host!s}:{port}"
 
-    def handle(self, request: httpx2.Request) -> httpx2.Response:
-        self.requests.append(request)
-        recorded = self._responses.pop(0)
-        return httpx2.Response(recorded["status"], json=recorded["body"])
+    def serve(self, responses: list[dict[str, Any]]) -> None:
+        self.calls.clear()
+        self._responses = list(responses)
+
+    def close(self) -> None:
+        self._server.shutdown()
+        self._server.server_close()
+
+    def _handler(self) -> type[BaseHTTPRequestHandler]:
+        vendor = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self) -> None:
+                body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+                headers = {k.lower(): v for k, v in self.headers.items()}
+                vendor.calls.append(
+                    VendorCall(
+                        method=self.command,
+                        # Implementations keep the vendor's Host header and path.
+                        url=f"https://{headers.get('host')}{self.path}",
+                        headers=headers,
+                        json=json.loads(body) if body else None,
+                    )
+                )
+                if vendor._responses:
+                    response = vendor._responses.pop(0)
+                else:
+                    response = {"status": 500, "body": {"error": "no response left"}}
+                reply = json.dumps(response["body"]).encode()
+                self.send_response(response["status"])
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(reply)))
+                self.end_headers()
+                self.wfile.write(reply)
+
+            def log_message(self, format: str, *args: Any) -> None:
+                pass
+
+        return Handler
 
 
-@pytest.fixture(params=MODELS)
-def model(request: pytest.FixtureRequest) -> str:
-    return str(request.param)
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--impl",
+        action="append",
+        choices=sorted(IMPLEMENTATIONS),
+        help="Implementation to test; repeat for several. Default: all.",
+    )
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    if "implementation" in metafunc.fixturenames:
+        names = metafunc.config.getoption("impl") or sorted(IMPLEMENTATIONS)
+        metafunc.parametrize("implementation", names, indirect=True, scope="session")
+
+
+@pytest.fixture(scope="session")
+def mock_vendor() -> Iterator[MockVendor]:
+    vendor = MockVendor()
+    yield vendor
+    vendor.close()
 
 
 @pytest.fixture
-def vendor() -> FakeVendor:
-    return FakeVendor()
+def vendor(mock_vendor: MockVendor) -> MockVendor:
+    mock_vendor.serve([])
+    return mock_vendor
 
 
-@pytest.fixture(params=["sync", "async"])
-def ask(request: pytest.FixtureRequest, vendor: FakeVendor) -> Ask:
-    """Call `ask` on a `Client` or `AsyncClient` wired to the fake vendor."""
-    transport = httpx2.MockTransport(vendor.handle)
+@pytest.fixture(scope="session")
+def implementation(
+    request: pytest.FixtureRequest, mock_vendor: MockVendor
+) -> Iterator[str]:
+    """Start the implementation's test server and return its URL."""
+    spec = IMPLEMENTATIONS[request.param]
+    # Real API keys stay out of reach: the cases pass the keys they need.
+    env = {k: v for k, v in os.environ.items() if not k.endswith("_API_KEY")}
+    process = subprocess.Popen(
+        [*spec["command"], "--vendor-url", mock_vendor.url],
+        cwd=REPO / spec["cwd"],
+        env=env,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    assert process.stdout is not None
+    try:
+        ready, _, _ = select.select([process.stdout], [], [], STARTUP_TIMEOUT)
+        line = process.stdout.readline() if ready else ""
+        match = re.fullmatch(r"listening on (\S+)\n", line)
+        if not match:
+            pytest.fail(f"{request.param} did not start; first line: {line!r}")
+        yield match[1]
+    finally:
+        process.terminate()
+        process.wait(timeout=10)
 
-    def ask_sync(
-        model: str,
-        question: str,
-        api_keys: Mapping[str, str] | None = TEST_API_KEYS,
-        **kwargs: Any,
-    ) -> str:
-        http_client = httpx2.Client(transport=transport)
-        with Client(api_keys=api_keys, http_client=http_client) as client:
-            return client.ask(model, question, **kwargs)
 
-    def ask_async(
-        model: str,
-        question: str,
-        api_keys: Mapping[str, str] | None = TEST_API_KEYS,
-        **kwargs: Any,
-    ) -> str:
-        async def run() -> str:
-            http_client = httpx2.AsyncClient(transport=transport)
-            async with AsyncClient(
-                api_keys=api_keys, http_client=http_client
-            ) as client:
-                return await client.ask(model, question, **kwargs)
-
-        return asyncio.run(run())
-
-    return ask_sync if request.param == "sync" else ask_async
+def ask(server_url: str, args: dict[str, Any]) -> dict[str, Any]:
+    request = urllib.request.Request(
+        f"{server_url}/ask",
+        data=json.dumps(args).encode(),
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with _opener.open(request) as response:
+            reply: dict[str, Any] = json.load(response)
+    except urllib.error.HTTPError as error:
+        pytest.fail(f"The test server failed:\n{error.read().decode()}")
+    return reply

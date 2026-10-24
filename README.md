@@ -1,12 +1,16 @@
 # uni-llm-client
 
-Another Python library to abstract LLM APIs behind a common signature
+Libraries to abstract LLM APIs behind a common signature, in several languages
 
-## Installation
+## Ports
 
-```sh
-pip install uni-llm-client
-```
+| Language | Directory | Status |
+|---|---|---|
+| Python | [`packages/python`](packages/python) | `pip install uni-llm-client` |
+| TypeScript | [`packages/typescript`](packages/typescript) | Not started |
+
+Every port follows the specs in [`docs/specs`](docs/specs). Every port passes
+the language-agnostic tests in [`tests`](tests/README.md).
 
 ## Contributing
 
