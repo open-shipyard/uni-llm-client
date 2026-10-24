@@ -11,6 +11,13 @@ and this project adheres to
 ### Added
 
 - Initial Python project structure.
+- `complete`: send a conversation of messages, with a system prompt and
+  tools, and receive the model's message, stop reason and usage. Assistant
+  messages replay to their provider as they came, so signed reasoning and
+  tool blocks are kept. Specified in `docs/specs/messages.md`.
+- `stream`: the same, as events: text and reasoning deltas, tool calls as
+  they form, and the whole response last. Specified in
+  `docs/specs/streaming.md`.
 
 ### Changed
 

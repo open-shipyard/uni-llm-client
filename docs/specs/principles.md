@@ -16,6 +16,13 @@ One method of the client should receive as inputs:
 
 That method should return a `str`.
 
+A second method, `complete`, should receive a conversation of messages, with
+an optional system prompt and tools, and return the model's whole response:
+its message, why it stopped, and the tokens used ([messages.md](messages.md)).
+A third, `stream`, should receive the same and yield the response as it
+arrives ([streaming.md](streaming.md)). `ask` is `complete` with one user
+message.
+
 The library internals should have a single abstract base class (ABC) that can be
 implemented for each provider.
 

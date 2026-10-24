@@ -3,14 +3,15 @@
 
 """Resolves ``provider/model`` ids to providers, shared by both clients."""
 
-import os
-from collections.abc import Mapping
+from __future__ import annotations
 
-import httpx2
+import os
+from collections.abc import Mapping, Sequence
 
 from uni_llm_client._effort import Effort, parse_effort
 from uni_llm_client._errors import AuthenticationError
-from uni_llm_client.providers._base import Provider
+from uni_llm_client._messages import Message, Tool
+from uni_llm_client.providers._base import ModelCall, Provider
 from uni_llm_client.providers.anthropic import AnthropicProvider
 from uni_llm_client.providers.openrouter import OpenRouterProvider
 
@@ -20,7 +21,7 @@ PROVIDERS: dict[str, type[Provider]] = {
 
 
 class ProviderRegistry:
-    """Creates each provider once and builds the first request for a question."""
+    """Creates each provider once and validates a call before anything is sent."""
 
     def __init__(self, api_keys: Mapping[str, str] | None) -> None:
         self._api_keys = dict(api_keys or {})
@@ -29,23 +30,36 @@ class ProviderRegistry:
     def prepare(
         self,
         model_id: str,
-        question: str,
+        messages: Sequence[Message],
         *,
-        web_search: bool,
-        effort: Effort | str | None,
-    ) -> tuple[Provider, httpx2.Request]:
-        """Validate the arguments and build the first request without sending it."""
+        system: str | None = None,
+        tools: Sequence[Tool] = (),
+        web_search: bool = False,
+        effort: Effort | str | None = None,
+        max_tokens: int | None = None,
+    ) -> tuple[Provider, ModelCall]:
+        """Validate the arguments and resolve the provider without sending anything."""
         parsed_effort = parse_effort(effort)
+        if not messages:
+            raise ValueError("Expected at least one message")
+        if max_tokens is not None and max_tokens < 1:
+            raise ValueError(f"Expected a positive max_tokens, got {max_tokens!r}")
         name, _, model = model_id.partition("/")
         if not model:
             raise ValueError(
                 f"Expected a model id like 'anthropic/claude-opus-5', got {model_id!r}"
             )
         provider = self._provider(name)
-        request = provider.build_request(
-            model, question, web_search=web_search, effort=parsed_effort
+        call = ModelCall(
+            model=model,
+            messages=tuple(messages),
+            system=system,
+            tools=tuple(tools),
+            web_search=web_search,
+            effort=parsed_effort,
+            max_tokens=max_tokens,
         )
-        return provider, request
+        return provider, call
 
     def _provider(self, name: str) -> Provider:
         if name not in self._providers:
