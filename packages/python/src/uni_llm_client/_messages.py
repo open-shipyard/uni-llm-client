@@ -91,7 +91,7 @@ class VendorContent:
     """
 
     kind: str
-    """The kind of the provider that returned it (docs/specs/providers.md)."""
+    """The kind of the provider that returned it."""
 
     content: Any
 

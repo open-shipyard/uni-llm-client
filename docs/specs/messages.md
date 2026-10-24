@@ -43,7 +43,7 @@ those spent reasoning, when the vendor counts them; else 0).
 
 ## `complete`
 
-Inputs: a `provider/model` id ([providers.md](providers.md)), `messages`, and
+Inputs: a `provider/model` id, `messages`, and
 optionally `system`, `tools`, `web_search`, `effort` ([effort.md](effort.md)),
 `max_tokens` and `timeout`. Output: a response.
 
@@ -54,10 +54,9 @@ optionally `system`, `tools`, `web_search`, `effort` ([effort.md](effort.md)),
   `ValueError`.
 - **MSG-2**: An assistant message is replayed to a provider of the kind that
   returned it as that provider returned it, `vendor.content` whole, so that
-  signed reasoning, citations and the vendor's tool blocks are never lost
-  ([providers.md](providers.md)). A provider of another kind receives the
-  message's blocks; reasoning blocks and the vendor's tool blocks are left out,
-  since they cannot be made valid for it.
+  signed reasoning, citations and the vendor's tool blocks are never lost. A
+  provider of another kind receives the message's blocks; reasoning blocks and
+  the vendor's tool blocks are left out, since they cannot be made valid for it.
 - **MSG-3**: In a user message, tool results come before text. On an API where
   tool results are messages of their own, each becomes one, before the text.
 - **MSG-4**: A message of one text block is sent as plain text where the API

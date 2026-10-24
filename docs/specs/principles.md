@@ -1,7 +1,6 @@
 # Principles
 
-Users should be able to instantiate the library client once, naming the
-providers it reaches ([providers.md](providers.md)).
+Users should be able to instantiate the library client once.
 
 The library should provide a synchronous client and an asynchronous client.
 

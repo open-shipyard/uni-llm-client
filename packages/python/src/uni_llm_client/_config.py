@@ -1,7 +1,7 @@
 # Copyright 2026 The uni-llm-client Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""How a client reaches a vendor, as specified in docs/specs/providers.md."""
+"""How a client reaches a vendor."""
 
 from __future__ import annotations
 

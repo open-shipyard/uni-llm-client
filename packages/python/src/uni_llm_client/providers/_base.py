@@ -65,10 +65,9 @@ class StreamParser(ABC):
 class Provider(ABC):
     """Translates the generic API into one kind of vendor HTTP API.
 
-    An instance is one provider: the kind's API at one base URL, with one key
-    (docs/specs/providers.md). Implementations do no I/O: `Client` and
-    `AsyncClient` send the requests they build and read the responses, so a
-    single implementation serves both.
+    An instance is one provider: the kind's API at one base URL, with one key.
+    Implementations do no I/O: `Client` and `AsyncClient` send the requests they
+    build and read the responses, so a single implementation serves both.
     """
 
     kind: ClassVar[str]

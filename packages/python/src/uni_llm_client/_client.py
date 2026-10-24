@@ -56,7 +56,7 @@ class Client:
             ``ANTHROPIC_API_KEY``.
         providers: Providers of your own by name, e.g. a gateway speaking the
             Anthropic API: ``{"gateway": ProviderConfig("anthropic", key, url)}``.
-            One named like a built-in replaces it. See docs/specs/providers.md.
+            One named like a built-in replaces it.
         http_client: HTTP client used to send requests; closed with this client.
         max_retries: Retries of a request that failed in a way that may pass, such
             as a rate limit, a vendor error or a lost connection; 0 disables them.
