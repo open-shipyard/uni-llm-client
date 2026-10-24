@@ -87,6 +87,13 @@ that finds no response left gets a 500.
 
 A new behaviour usually needs a new case. Reuse a payload when one fits.
 
+## Parametrized tests
+
+Some rules hold for many inputs, and a case per input would repeat itself.
+These rules get a parametrized test in this folder instead, with one row per
+input. They call the same test servers. `test_retryable.py` checks which vendor
+answers are retried, by counting the vendor requests.
+
 ## Test server protocol
 
 Each port's test server lives in its own `tests/` directory and is listed in
