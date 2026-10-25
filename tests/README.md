@@ -97,6 +97,8 @@ Some rules hold for many inputs, and a case per input would repeat itself.
 These rules get a parametrized test in this folder instead, with one row per
 input. They call the same test servers.
 
+- `test_message_form.py` checks that malformed messages are refused before they
+  reach the vendor.
 - `test_retryable.py` checks which vendor answers are retried, by counting the
   vendor requests.
 - `test_retry_delay.py` checks how long the clients wait before a retry. The
@@ -149,7 +151,7 @@ library's own JSON form, specified in
 [Serialisation](../docs/specs/messages.md#serialisation) (MSG-9 to MSG-12), and
 each test server converts them with its library. Replies hold every field,
 defaults included. Arguments may leave out a field that has a default, and a
-message of another form is an `invalid_argument` error.
+malformed message is an `invalid_argument` error.
 
 | Value | JSON |
 |---|---|
