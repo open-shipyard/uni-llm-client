@@ -12,12 +12,15 @@ and this project adheres to
 
 - Initial Python project structure.
 - Anthropic and OpenRouter support
+- The reasoning's text from Anthropic's adaptive thinking, which the newer
+  models leave out unless asked (EFFORT-7)
 - Retries of failed model calls (`max_retries`), and `TransportError` for connection failures and timeouts
 - Options for the waits before a retry: `initial_retry_delay`, `max_retry_delay`
   and `max_retry_after`
 - Providers of your own: a gateway or another deployment of a known API,
   under a name of your own, with its own key and base URL; and a `timeout`
   per call.
+- A JSON form of messages and responses to store conversations in: `to_dict` and `from_dict`
 
 ### Changed
 
