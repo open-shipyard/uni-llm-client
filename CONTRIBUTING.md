@@ -76,7 +76,16 @@ The TypeScript port uses npm. Installs are `npm ci`, never `npm install`:
     npm ci
     npm run typecheck
 
-New source files start with the license header:
+The Swift port needs Swift 6, from Xcode or from
+[swift.org/install](https://www.swift.org/install/) on Linux:
+
+    cd packages/swift
+    swift format lint --recursive --strict Package.swift Sources Tests
+    swift build
+    swift test
+
+New source files start with the license header, in the language's comment
+syntax, such as `//` in Swift:
 
     # Copyright 2026 The uni-llm-client Authors
     # SPDX-License-Identifier: Apache-2.0
