@@ -8,9 +8,7 @@ import Foundation
 /// Checks the providers once, and validates a call before anything is sent.
 struct ProviderRegistry: Sendable {
     /// The implementation of each kind.
-    static let kinds: [String: any Provider.Type] = [
-        AnthropicProvider.kind: AnthropicProvider.self,
-    ]
+    static let kinds: [String: any Provider.Type] = [AnthropicProvider.kind: AnthropicProvider.self]
 
     private let configs: [String: ProviderConfig]
     /// The built-ins that were not replaced: only they read their environment
