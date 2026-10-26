@@ -232,3 +232,86 @@ jobs:
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1
+
+  security-screening:
+    name: Claude security screening
+    # The tests first, so that the review spends nothing on broken code.
+    needs: ci-ok
+    # Ready pull requests from this repository only: forks get no secrets, and Claude trusts the code it reads.
+    # Every review job names its own condition: a job skipped upstream, such as a
+    # package's that did not change, would otherwise skip all those after it.
+    if: >-
+      !cancelled() && needs.ci-ok.result == 'success' &&
+      github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      touches_security: ${{ fromJSON(steps.screen.outputs.structured_output).touches_security }}
+    steps:
+      # The merge commit, so branches from before the prompt files still have them.
+      - uses: actions/checkout@v7
+      - id: prompt
+        env:
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo 'text<<END_OF_PROMPT'
+            envsubst '$REPO $PR_NUMBER' < .github/prompts/security-screening.md
+            echo 'END_OF_PROMPT'
+          } >> "$GITHUB_OUTPUT"
+      # v1.0.262
+      - id: screen
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: ${{ steps.prompt.outputs.text }}
+          claude_args: |
+            --model claude-haiku-5-5
+            --effort low
+            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --json-schema '{"type":"object","properties":{"touches_security":{"type":"boolean"}},"required":["touches_security"]}'
+
+  # Posts with the workflow token, as `github-actions[bot]`. The job holds no
+  # `id-token`, so nothing in it can sign in as an app.
+  security-review:
+    name: Claude security review
+    needs: security-screening
+    if: ${{ !cancelled() && needs.security-screening.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      DEPTH: ${{ needs.security-screening.outputs.touches_security == 'true' && 'Deep' || 'Standard' }}
+      # The repository variable SECURITY_REVIEW_MODEL picks the model, in Settings → Secrets and variables → Actions.
+      MODEL: ${{ vars.SECURITY_REVIEW_MODEL || 'claude-opus-5-5' }}
+      EFFORT: ${{ needs.security-screening.outputs.touches_security == 'true' && 'xhigh' || 'medium' }}
+    steps:
+      # The merge commit, so branches from before the prompt files still have them.
+      - uses: actions/checkout@v7
+      - id: prompt
+        env:
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          {
+            echo 'text<<END_OF_PROMPT'
+            envsubst '$REPO $PR_NUMBER $HEAD_SHA $DEPTH $MODEL $EFFORT' < .github/prompts/security-review.md
+            echo 'END_OF_PROMPT'
+          } >> "$GITHUB_OUTPUT"
+      # v1.0.262
+      - uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: ${{ steps.prompt.outputs.text }}
+          claude_args: |
+            --model ${{ env.MODEL }}
+            --effort ${{ env.EFFORT }}
+            --allowedTools "Read,Grep,Glob,mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment ${{ github.event.pull_request.number }}:*)"
