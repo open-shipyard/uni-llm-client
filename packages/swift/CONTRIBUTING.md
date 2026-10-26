@@ -19,3 +19,9 @@ The same checks as CI, from this folder:
 
 `swift format format --recursive --in-place Package.swift Sources Tests` fixes
 what the lint finds. Its settings are in `.swift-format`.
+
+## Platforms
+
+`URLSession` on Linux cuts a request's `timeoutInterval` to whole seconds, so
+`URLSessionTransport` keeps the timeout of a call itself, and gives
+`URLSession` a longer one as a backstop.
