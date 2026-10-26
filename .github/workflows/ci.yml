@@ -194,8 +194,10 @@ jobs:
         with:
           persist-credentials: false
       - run: swift --version
-      - run: swift build
-      - run: swift test
+      # Builds only with the versions in Package.resolved; the package has no
+      # dependencies yet, so nothing is resolved.
+      - run: swift build --force-resolved-versions
+      - run: swift test --force-resolved-versions
 
   # One Sonar project per package, plus one for the workflows and shared tests.
   # Pull requests from forks get no secrets, so they skip the scans.
