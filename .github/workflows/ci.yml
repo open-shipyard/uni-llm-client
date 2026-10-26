@@ -232,3 +232,196 @@ jobs:
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1
+
+  # The review jobs run Claude on text written by the pull request's author.
+  # Claude Code holds the OAuth token in its environment, so each job narrows
+  # what Claude can reach and what it can write:
+  # - Claude gets no shell. The diff is saved to a file first, and the summary
+  #   comes back as structured output for a later step to post.
+  # - The commands Claude Code runs get a scrubbed environment.
+  # - Claude cannot read /proc, the git config, which holds the action's token,
+  #   or the runner's temporary files.
+  # - The repository's own agent instructions are removed before Claude starts.
+  # - The action logs no tool output, even in a re-run with debug logging.
+  security-screening:
+    name: Claude security screening
+    # The tests first, so that the review spends nothing on broken code.
+    needs: ci-ok
+    # Ready pull requests from this repository only: forks get no secrets.
+    # Every review job names its own condition: a job skipped upstream, such as a
+    # package's that did not change, would otherwise skip all those after it.
+    if: >-
+      !cancelled() && needs.ci-ok.result == 'success' &&
+      github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      touches_security: ${{ fromJSON(steps.screen.outputs.structured_output).touches_security }}
+    steps:
+      # The merge commit, so branches from before the prompt files still have them.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - id: prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DIFF: /tmp/pr-review/pr.diff
+        run: |
+          mkdir -p "$(dirname "$DIFF")"
+          gh pr diff "$PR_NUMBER" -R "$REPO" > "$DIFF"
+          {
+            echo 'text<<END_OF_PROMPT'
+            envsubst '$REPO $PR_NUMBER $DIFF' < .github/prompts/security-screening.md
+            echo 'END_OF_PROMPT'
+          } >> "$GITHUB_OUTPUT"
+      - name: Remove the repository's agent instructions
+        run: >-
+          find . -path ./.git -prune -o \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name AGENTS.md
+          -o -name .claude -o -name .mcp.json -o -name .claude.json \) -print0 | xargs -0 rm -rf
+      # The scrubbed environment needs bubblewrap. The action installs it only
+      # for workflows that let in users without write access, so this step does
+      # what the action's own does.
+      - name: Install bubblewrap
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends bubblewrap socat
+          # Ubuntu 24.04 and later restrict unprivileged user namespaces.
+          if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      # v1.0.262
+      - id: screen
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13
+        env:
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
+          ACTIONS_STEP_DEBUG: "false"
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: ${{ steps.prompt.outputs.text }}
+          show_full_output: false
+          display_report: false
+          claude_args: |
+            --model claude-haiku-5-5
+            --effort low
+            --allowedTools "Read,Grep,Glob"
+            --disallowedTools "Bash,WebFetch,WebSearch,Read(//proc/**),Read(./.git/**),Read(/${{ runner.temp }}/**)"
+            --json-schema '{"type":"object","properties":{"touches_security":{"type":"boolean"}},"required":["touches_security"]}'
+
+  # Posts with the workflow token, as `github-actions[bot]`. The job holds no
+  # `id-token`, so nothing in it can sign in as an app.
+  security-review:
+    name: Claude security review
+    needs: security-screening
+    if: ${{ !cancelled() && needs.security-screening.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      DEPTH: ${{ needs.security-screening.outputs.touches_security == 'true' && 'Deep' || 'Standard' }}
+      # The repository variable SECURITY_REVIEW_MODEL picks the model, in Settings → Secrets and variables → Actions.
+      MODEL: ${{ vars.SECURITY_REVIEW_MODEL || 'claude-opus-5-5' }}
+      EFFORT: ${{ needs.security-screening.outputs.touches_security == 'true' && 'xhigh' || 'medium' }}
+    steps:
+      # The merge commit, so branches from before the prompt files still have them.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - id: prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          DIFF: /tmp/pr-review/pr.diff
+        run: |
+          mkdir -p "$(dirname "$DIFF")"
+          gh pr diff "$PR_NUMBER" -R "$REPO" > "$DIFF"
+          {
+            echo 'text<<END_OF_PROMPT'
+            envsubst '$REPO $PR_NUMBER $HEAD_SHA $DIFF $DEPTH $MODEL $EFFORT' < .github/prompts/security-review.md
+            echo 'END_OF_PROMPT'
+          } >> "$GITHUB_OUTPUT"
+      - name: Remove the repository's agent instructions
+        run: >-
+          find . -path ./.git -prune -o \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name AGENTS.md
+          -o -name .claude -o -name .mcp.json -o -name .claude.json \) -print0 | xargs -0 rm -rf
+      # The scrubbed environment needs bubblewrap. The action installs it only
+      # for workflows that let in users without write access, so this step does
+      # what the action's own does.
+      - name: Install bubblewrap
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends bubblewrap socat
+          # Ubuntu 24.04 and later restrict unprivileged user namespaces.
+          if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      # v1.0.262
+      - id: review
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13
+        env:
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
+          ACTIONS_STEP_DEBUG: "false"
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: ${{ steps.prompt.outputs.text }}
+          show_full_output: false
+          display_report: false
+          claude_args: |
+            --model ${{ env.MODEL }}
+            --effort ${{ env.EFFORT }}
+            --allowedTools "Read,Grep,Glob,mcp__github_inline_comment__create_inline_comment"
+            --disallowedTools "Bash,WebFetch,WebSearch,Read(//proc/**),Read(./.git/**),Read(/${{ runner.temp }}/**)"
+            --json-schema '{"type":"object","properties":{"summary":{"type":"string"}},"required":["summary"]}'
+      # Refuses a summary that holds either token, as is or in base64.
+      - name: Post the summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OUTPUT: ${{ steps.review.outputs.structured_output }}
+          SUMMARY: /tmp/pr-review/summary.md
+        run: |
+          jq -r .summary <<< "$OUTPUT" > "$SUMMARY"
+          for secret in "$GH_TOKEN" "$CLAUDE_TOKEN"; do
+            for form in "$secret" "$(printf %s "$secret" | base64 -w0)"; do
+              if grep -qF -- "$form" "$SUMMARY"; then
+                echo "::error::The summary holds a secret. It was not posted."
+                exit 1
+              fi
+            done
+          done
+          gh pr comment "$PR_NUMBER" -R "$REPO" --body-file "$SUMMARY"
+      # Hides the earlier summaries that found nothing, now that a newer one is
+      # posted. Summaries with findings stay visible.
+      - name: Hide earlier summaries without findings
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F number="$PR_NUMBER" -f query='
+            query($owner: String!, $name: String!, $number: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $number) {
+                  comments(last: 100) { nodes { id isMinimized author { login } body } }
+                }
+              }
+            }' --jq '
+            [.data.repository.pullRequest.comments.nodes[]
+             | select(.author.login == "github-actions" and (.body | contains("## Claude Code Security Review")))]
+            | .[:-1][] | select(.isMinimized | not)
+            | select(.body | contains("✓ No security issues found")) | .id' |
+          while read -r id; do
+            gh api graphql --silent -f id="$id" -f query='
+              mutation($id: ID!) { minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) { clientMutationId } }'
+          done
