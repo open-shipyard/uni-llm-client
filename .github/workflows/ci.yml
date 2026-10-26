@@ -315,3 +315,27 @@ jobs:
             --model ${{ env.MODEL }}
             --effort ${{ env.EFFORT }}
             --allowedTools "Read,Grep,Glob,mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment ${{ github.event.pull_request.number }}:*)"
+      # Hides the earlier summaries that found nothing, now that a newer one is
+      # posted. Summaries with findings stay visible.
+      - name: Hide earlier summaries without findings
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F number="$PR_NUMBER" -f query='
+            query($owner: String!, $name: String!, $number: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $number) {
+                  comments(last: 100) { nodes { id isMinimized author { login } body } }
+                }
+              }
+            }' --jq '
+            [.data.repository.pullRequest.comments.nodes[]
+             | select(.author.login == "github-actions" and (.body | contains("## Claude Code Security Review")))]
+            | .[:-1][] | select(.isMinimized | not)
+            | select(.body | contains("✓ No security issues found")) | .id' |
+          while read -r id; do
+            gh api graphql --silent -f id="$id" -f query='
+              mutation($id: ID!) { minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) { clientMutationId } }'
+          done
